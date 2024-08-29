@@ -1,7 +1,7 @@
 # Проект «Большое путешествие»
 
 * Студент: [Антон Охрименко](https://up.htmlacademy.ru/ecmascript/24/user/476995).
-* Наставник: `Неизвестно`.
+* Наставник: [Евгений Лепёшкин](https://htmlacademy.ru/profile/spearance).
 
 ---
 
