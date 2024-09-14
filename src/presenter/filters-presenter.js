@@ -1,14 +1,15 @@
-import { render } from '../render.js';
+import { render } from '../framework/render.js';
 import FiltersView from '../view/filters-view.js';
 
 export default class FiltersPresenter {
-  filtersViewComponent = new FiltersView();
+  #filtersContainer = null;
+  #filtersViewComponent = new FiltersView();
 
   constructor(filtersContainer) {
-    this.filtersContainer = filtersContainer;
+    this.#filtersContainer = filtersContainer;
   }
 
   init() {
-    render(this.filtersViewComponent, this.filtersContainer);
+    render(this.#filtersViewComponent, this.#filtersContainer);
   }
 }

@@ -1,4 +1,4 @@
-import { createElement } from '../render.js';
+import AbstractView from '../framework/view/abstract-view';
 import { formatDate, capitalizeFirstLetter } from '../utils.js';
 import { EVENT_TYPES, DATE_FORMAT } from '../constants.js';
 
@@ -126,26 +126,20 @@ function createEditFormTemplate(event, citiesList, offers) {
           </form>`;
 }
 
-export default class EditFormView {
+export default class EditFormView extends AbstractView {
+  #event = null;
+  #citiesList = null;
+  #offers = null;
+
   constructor(event, citiesList, offers) {
-    this.event = event;
-    this.citiesList = citiesList;
-    this.offers = offers;
+    super();
+
+    this.#event = event;
+    this.#citiesList = citiesList;
+    this.#offers = offers;
   }
 
-  getTemplate() {
-    return createEditFormTemplate(this.event, this.citiesList, this.offers);
-  }
-
-  getElement() {
-    if (!this.element) {
-      this.element = createElement(this.getTemplate());
-    }
-
-    return this.element;
-  }
-
-  removeElement() {
-    this.element = null;
+  get template() {
+    return createEditFormTemplate(this.#event, this.#citiesList, this.#offers);
   }
 }
