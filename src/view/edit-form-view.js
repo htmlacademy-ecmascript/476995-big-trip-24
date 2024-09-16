@@ -1,4 +1,4 @@
-import { createElement } from '../render.js';
+import AbstractView from '../framework/view/abstract-view';
 import { formatDate, capitalizeFirstLetter } from '../utils.js';
 import { EVENT_TYPES, DATE_FORMAT } from '../constants.js';
 
@@ -126,26 +126,39 @@ function createEditFormTemplate(event, citiesList, offers) {
           </form>`;
 }
 
-export default class EditFormView {
-  constructor(event, citiesList, offers) {
-    this.event = event;
-    this.citiesList = citiesList;
-    this.offers = offers;
+export default class EditFormView extends AbstractView {
+  #event = null;
+  #citiesList = null;
+  #offers = null;
+
+  #handleFormSubmit = null;
+  #handleEditClick = null;
+
+  constructor(event, citiesList, offers, onFormSubmit, onEditClick) {
+    super();
+
+    this.#event = event;
+    this.#citiesList = citiesList;
+    this.#offers = offers;
+
+    this.#handleFormSubmit = onFormSubmit;
+    this.#handleEditClick = onEditClick;
+    this.element.addEventListener('submit', this.#formSubmitHandler);
+    this.element.querySelector('.event__rollup-btn')
+      .addEventListener('click', this.#editClickHandler);
   }
 
-  getTemplate() {
-    return createEditFormTemplate(this.event, this.citiesList, this.offers);
+  get template() {
+    return createEditFormTemplate(this.#event, this.#citiesList, this.#offers);
   }
 
-  getElement() {
-    if (!this.element) {
-      this.element = createElement(this.getTemplate());
-    }
+  #formSubmitHandler = (evt) => {
+    evt.preventDefault();
+    this.#handleFormSubmit();
+  };
 
-    return this.element;
-  }
-
-  removeElement() {
-    this.element = null;
-  }
+  #editClickHandler = (evt) => {
+    evt.preventDefault();
+    this.#handleEditClick();
+  };
 }
