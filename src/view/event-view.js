@@ -1,5 +1,5 @@
 import AbstractView from '../framework/view/abstract-view';
-import { formatDate, getEventDuration } from '../utils.js';
+import { formatDate, getEventDuration } from '../utils/general.js';
 import { DATE_FORMAT } from '../constants.js';
 
 function makeOffersListHtml(offersList) {

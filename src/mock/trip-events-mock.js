@@ -1,4 +1,4 @@
-import { getRandomValuesFromArray } from '../utils.js';
+import { getRandomValuesFromArray } from '../utils/general';
 
 const tripEvents = [
   {
