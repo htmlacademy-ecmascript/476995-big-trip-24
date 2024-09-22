@@ -1,5 +1,5 @@
 import AbstractView from '../framework/view/abstract-view';
-import { formatDate, capitalizeFirstLetter } from '../utils.js';
+import { formatDate, capitalizeFirstLetter } from '../utils/general.js';
 import { EVENT_TYPES, DATE_FORMAT } from '../constants.js';
 
 function makeEventTypeListHtml(checkedType) {
@@ -47,9 +47,7 @@ function makeOffersHtml(offers, selectedOffers) {
                 <span class="event__offer-price">${offer.price}</span>
               </label>
             </div>`;
-  }
-
-  ).join('');
+  }).join('');
 
   return `<section class="event__section  event__section--offers">
             <h3 class="event__section-title  event__section-title--offers">Offers</h3>
