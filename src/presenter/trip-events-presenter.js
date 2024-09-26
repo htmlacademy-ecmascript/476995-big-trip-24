@@ -43,7 +43,7 @@ export default class TripEventsPresenter {
     const eventOffers = this.#offers.find((offer) => offer.type === tripEvent.type).offers;
 
     const tripEventPresenter = new TripEventPresenter(this.#tripEventsListViewComponent.element, this.#citiesList, eventOffers,
-      this.#handleUpdateTripEvent
+      this.#handleUpdateTripEvent, this.#handleStateChange
     );
     tripEventPresenter.init(tripEvent);
     this.#tripEventPresenters.set(tripEvent.id, tripEventPresenter);
@@ -52,6 +52,10 @@ export default class TripEventsPresenter {
   #handleUpdateTripEvent = (updatedEvent) => {
     this.#tripEvents = this.#tripEvents.map((event) => event.id === updatedEvent.id ? updatedEvent : event);
     this.#tripEventPresenters.get(updatedEvent.id).init(updatedEvent);
+  };
+
+  #handleStateChange = () => {
+    this.#tripEventPresenters.forEach((presenter) => presenter.setDefaultState());
   };
 
   #enrichEvents(tripEvents) {

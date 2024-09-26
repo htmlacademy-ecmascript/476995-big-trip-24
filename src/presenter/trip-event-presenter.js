@@ -11,6 +11,7 @@ const EVENT_STATE = {
 export default class TripEventPresenter {
   #tripEventsListContainer = null;
   #handleUpdateTripEvent = null;
+  #handerStateChange = null;
 
   #citiesList = [];
   #eventOffers = [];
@@ -22,11 +23,12 @@ export default class TripEventPresenter {
   #tripEvent = null;
   #tripEventState = EVENT_STATE.DEFAULT;
 
-  constructor(tripEventsListContainer, citiesList, eventOffers, onUpdateTripEvent) {
+  constructor(tripEventsListContainer, citiesList, eventOffers, onUpdateTripEvent, onStateChange) {
     this.#tripEventsListContainer = tripEventsListContainer;
     this.#citiesList = citiesList;
     this.#eventOffers = eventOffers;
     this.#handleUpdateTripEvent = onUpdateTripEvent;
+    this.#handerStateChange = onStateChange;
   }
 
   init(tripEvent) {
@@ -61,7 +63,14 @@ export default class TripEventPresenter {
     remove(prevEditFormViewComponent);
   }
 
+  setDefaultState() {
+    if (this.#tripEventState !== EVENT_STATE.DEFAULT) {
+      this.#replaceEditFormToEvent();
+    }
+  }
+
   #replaceEventToEditForm() {
+    this.#handerStateChange();
     replace(this.#editFormViewComponent, this.#eventViewComponent);
     this.#tripEventState = EVENT_STATE.EDIT;
     document.addEventListener('keydown', this.#escKeyDownHandler);
