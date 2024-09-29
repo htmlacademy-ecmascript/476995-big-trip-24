@@ -6,7 +6,7 @@ const DATE_FORMAT = {
   INPUT_DATE: 'DD/MM/YY HH:mm'
 };
 
-const SortingType = {
+const SortType = {
   DAY: 'day',
   EVENT: 'event',
   TIME: 'time',
@@ -21,6 +21,4 @@ const FilterType = {
   PAST: 'past'
 };
 
-const EnabledSortingTypes = [ SortingType.DAY, SortingType.TIME, SortingType.PRICE ];
-
-export { EVENT_TYPES, DATE_FORMAT, SortingType, EnabledSortingTypes, FilterType };
+export { EVENT_TYPES, DATE_FORMAT, SortType, FilterType };
