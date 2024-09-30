@@ -69,6 +69,12 @@ export default class TripEventPresenter {
     }
   }
 
+  destroy() {
+    remove(this.#eventViewComponent);
+    remove(this.#editFormViewComponent);
+    remove(this.#tripEventsListItemComponent);
+  }
+
   #replaceEventToEditForm() {
     this.#handerStateChange();
     replace(this.#editFormViewComponent, this.#eventViewComponent);
