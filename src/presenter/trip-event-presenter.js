@@ -13,8 +13,8 @@ export default class TripEventPresenter {
   #handleUpdateTripEvent = null;
   #handerStateChange = null;
 
-  #citiesList = [];
-  #eventOffers = [];
+  #allDestinations = [];
+  #allOffers = [];
 
   #tripEventsListItemComponent = null;
   #eventViewComponent = null;
@@ -23,10 +23,10 @@ export default class TripEventPresenter {
   #tripEvent = null;
   #tripEventState = EVENT_STATE.DEFAULT;
 
-  constructor(tripEventsListContainer, citiesList, eventOffers, onUpdateTripEvent, onStateChange) {
+  constructor(tripEventsListContainer, allDestinations, allOffers, onUpdateTripEvent, onStateChange) {
     this.#tripEventsListContainer = tripEventsListContainer;
-    this.#citiesList = citiesList;
-    this.#eventOffers = eventOffers;
+    this.#allDestinations = allDestinations;
+    this.#allOffers = allOffers;
     this.#handleUpdateTripEvent = onUpdateTripEvent;
     this.#handerStateChange = onStateChange;
   }
@@ -42,8 +42,9 @@ export default class TripEventPresenter {
     const prevEventViewComponent = this.#eventViewComponent;
     const prevEditFormViewComponent = this.#editFormViewComponent;
 
-    this.#eventViewComponent = new EventView(this.#tripEvent, this.#handleEditEventClick, this.#handleFavoriteBtnClick);
-    this.#editFormViewComponent = new EditFormView(this.#tripEvent, this.#citiesList, this.#eventOffers,
+    this.#eventViewComponent = new EventView(this.#tripEvent, this.#allDestinations, this.#allOffers,
+      this.#handleEditEventClick, this.#handleFavoriteBtnClick);
+    this.#editFormViewComponent = new EditFormView(this.#tripEvent, this.#allDestinations, this.#allOffers,
       this.#handleFormSubmit, this.#handleEditEventClick);
 
     if (prevEventViewComponent === null || prevEditFormViewComponent === null) {
