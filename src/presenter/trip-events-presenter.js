@@ -17,7 +17,6 @@ export default class TripEventsPresenter {
   #tripEvents = [];
   #destinations = [];
   #offers = [];
-  #citiesList = [];
 
   #currentSortType = SortType.DAY;
   #tripEventPresenters = new Map();
@@ -35,9 +34,6 @@ export default class TripEventsPresenter {
       this.#sortTripEvents(this.#currentSortType);
       this.#destinations = this.#destinationsModel.destinations;
       this.#offers = this.#offersModel.offers;
-
-      this.#citiesList = this.#destinations.map((dest) => dest.name);
-      this.#tripEvents = this.#enrichEvents(this.#tripEvents);
 
       this.#renderSortList();
       render(this.#tripEventsListViewComponent, this.#tripEventsListContainer);
@@ -59,10 +55,8 @@ export default class TripEventsPresenter {
   }
 
   #renderTripEvent(tripEvent) {
-    const eventOffers = this.#offers.find((offer) => offer.type === tripEvent.type).offers;
-
-    const tripEventPresenter = new TripEventPresenter(this.#tripEventsListViewComponent.element, this.#citiesList, eventOffers,
-      this.#handleUpdateTripEvent, this.#handleStateChange
+    const tripEventPresenter = new TripEventPresenter(this.#tripEventsListViewComponent.element, this.#destinations,
+      this.#offers, this.#handleUpdateTripEvent, this.#handleStateChange
     );
     tripEventPresenter.init(tripEvent);
     this.#tripEventPresenters.set(tripEvent.id, tripEventPresenter);
@@ -106,17 +100,5 @@ export default class TripEventsPresenter {
   #clearEventsList() {
     this.#tripEventPresenters.forEach((presenter) => presenter.destroy());
     this.#tripEventPresenters.clear();
-  }
-
-  #enrichEvents(tripEvents) {
-    return tripEvents.map((tripEvent) => {
-      const destinationData = this.#destinations.find((dest) => dest.id === tripEvent.destination);
-      const selectedOffers = this.#offers
-        .find((offer) => offer.type === tripEvent.type)
-        .offers
-        .filter((offer) => tripEvent.offers.includes(offer.id));
-
-      return { ...tripEvent, destinationData, selectedOffers };
-    });
   }
 }

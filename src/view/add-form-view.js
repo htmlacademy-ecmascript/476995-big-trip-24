@@ -1,18 +1,15 @@
-import AbstractView from '../framework/view/abstract-view';
+import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import dayjs from 'dayjs';
 import { formatDate, capitalizeFirstLetter } from '../utils/general.js';
 import { EVENT_TYPES, DATE_FORMAT } from '../constants.js';
 
 const BLANK_EVENT = {
-  dateFrom: dayjs(),
-  dateTo: dayjs(),
+  dateFrom: dayjs().format(),
+  dateTo: dayjs().format(),
   type: 'taxi',
-  destinationData: {
-    name: '',
-    description: ''
-  },
+  destination: '',
   basePrice: 0,
-  selectedOffers: []
+  offers: []
 };
 
 function makeEventTypeListHtml(checkedType) {
@@ -27,8 +24,8 @@ function makeEventTypeListHtml(checkedType) {
   ).join('');
 }
 
-function makeCitiesListHtml(citiesList) {
-  return citiesList.map((cityName) => `<option value="${cityName}"></option>`).join('');
+function makeCitiesListHtml(destinations) {
+  return destinations.map((destination) => `<option value="${destination.name}"></option>`).join('');
 }
 
 function makeDestinationHtml(city) {
@@ -36,21 +33,36 @@ function makeDestinationHtml(city) {
     return `<section class="event__section  event__section--destination">
               <h3 class="event__section-title  event__section-title--destination">Destination</h3>
               <p class="event__destination-description">${city.description}</p>
+              <div class="event__photos-container">
+                <div class="event__photos-tape">
+                  ${makePicturesList(city.pictures)}
+                  <img class="event__photo" src="img/photos/1.jpg" alt="Event photo">
+                  <img class="event__photo" src="img/photos/2.jpg" alt="Event photo">
+                  <img class="event__photo" src="img/photos/3.jpg" alt="Event photo">
+                  <img class="event__photo" src="img/photos/4.jpg" alt="Event photo">
+                  <img class="event__photo" src="img/photos/5.jpg" alt="Event photo">
+                </div>
+              </div>
             </section>`;
   }
 
   return '';
 }
 
-function makeOffersHtml(offers, selectedOffers) {
-  if (offers.length === 0) {
+function makePicturesList(pictures) {
+  return pictures
+    .map(({ src, description }) => `<img class="event__photo" src="${src}" alt="${description}">`)
+    .join('');
+}
+
+function makeOffersHtml(eventType, allOffers, selectedOffers) {
+  const eventOffers = allOffers.find((offer) => offer.type === eventType).offers;
+  if (eventOffers.length === 0) {
     return '';
   }
 
-  const selectedOfferIds = selectedOffers.map((selectedOffer) => selectedOffer.id);
-
-  const offersListHtml = offers.map((offer) => {
-    const isChecked = selectedOfferIds.includes(offer.id);
+  const offersListHtml = eventOffers.map((offer) => {
+    const isChecked = selectedOffers.includes(offer.id);
 
     return `<div class="event__offer-selector">
               <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offer.id}" type="checkbox" name="event-offer-${offer.id}" ${isChecked ? 'checked' : ''}>
@@ -71,16 +83,16 @@ function makeOffersHtml(offers, selectedOffers) {
           </section>`;
 }
 
-function createAddFormTemplate(event, citiesList, allOffers) {
-  const { dateFrom, dateTo, type, destinationData, basePrice, selectedOffers } = event;
+function createAddFormTemplate(event, allDestinations, allOffers) {
+  const { dateFrom, dateTo, type, destination, basePrice, offers } = event;
 
+  const destinationData = allDestinations.find((dest) => dest.id === destination);
   const eventTypeListHtml = makeEventTypeListHtml(type);
-  const citiesListHtml = makeCitiesListHtml(citiesList);
+  const citiesListHtml = makeCitiesListHtml(allDestinations);
   const eventTimeFrom = formatDate(dateFrom, DATE_FORMAT.INPUT_DATE);
   const eventTimeTo = formatDate(dateTo, DATE_FORMAT.INPUT_DATE);
   const destinationHtml = makeDestinationHtml(destinationData);
-  const eventOffers = allOffers.find((offer) => offer.type === type).offers;
-  const offersHtml = makeOffersHtml(eventOffers, selectedOffers);
+  const offersHtml = makeOffersHtml(type, allOffers, offers);
 
   return `<form class="event event--edit" action="#" method="post">
             <header class="event__header">
@@ -103,7 +115,7 @@ function createAddFormTemplate(event, citiesList, allOffers) {
                 <label class="event__label  event__type-output" for="event-destination-1">
                   ${type}
                 </label>
-                <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${destinationData.name}" list="destination-list-1">
+                <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${destinationData?.name || ''}" list="destination-list-1">
                 <datalist id="destination-list-1">
                   ${citiesListHtml}
                 </datalist>
@@ -135,18 +147,66 @@ function createAddFormTemplate(event, citiesList, allOffers) {
           </form>`;
 }
 
-export default class AddFormView extends AbstractView {
-  #citiesList = [];
+export default class AddFormView extends AbstractStatefulView {
+  #event = null;
+
+  #allDestinations = [];
   #allOffers = [];
 
-  constructor(citiesList, offers) {
+  #handleFormSubmit = null;
+  #handleEditClick = null;
+
+  constructor(allDestinations, allOffers, onFormSubmit, onEditClick) {
     super();
 
-    this.#citiesList = citiesList;
-    this.#allOffers = offers;
+    this.#event = BLANK_EVENT;
+    this._setState(this.#event);
+    this.#allDestinations = allDestinations;
+    this.#allOffers = allOffers;
+
+    this.#handleFormSubmit = onFormSubmit;
+    this.#handleEditClick = onEditClick;
+
+    this._restoreHandlers();
   }
 
   get template() {
-    return createAddFormTemplate(BLANK_EVENT, this.#citiesList, this.#allOffers);
+    return createAddFormTemplate(this._state, this.#allDestinations, this.#allOffers);
   }
+
+  _restoreHandlers() {
+    this.element.addEventListener('submit', this.#formSubmitHandler);
+    this.element.querySelector('.event__rollup-btn')
+      .addEventListener('click', this.#editClickHandler);
+    this.element.querySelector('.event__type-list')
+      .addEventListener('change', this.#changeEventTypeHandler);
+    this.element.querySelector('.event__input--destination')
+      .addEventListener('change', this.#changeDestionationHandler);
+  }
+
+  #formSubmitHandler = (evt) => {
+    evt.preventDefault();
+
+    this.#handleFormSubmit();
+  };
+
+  #editClickHandler = (evt) => {
+    evt.preventDefault();
+
+    this.#handleEditClick();
+  };
+
+  #changeEventTypeHandler = (evt) => {
+    evt.preventDefault();
+
+    const newType = evt.target.value;
+    this.updateElement({ type: newType, offers: [] });
+  };
+
+  #changeDestionationHandler = (evt) => {
+    const newDestinationName = evt.target.value;
+    const destinationId = this.#allDestinations.find((destination) => destination.name === newDestinationName).id;
+
+    this.updateElement({ destination: destinationId });
+  };
 }

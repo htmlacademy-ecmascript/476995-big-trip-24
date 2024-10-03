@@ -2,7 +2,12 @@ import AbstractView from '../framework/view/abstract-view';
 import { formatDate, getEventDuration } from '../utils/general.js';
 import { DATE_FORMAT } from '../constants.js';
 
-function makeOffersListHtml(offersList) {
+function makeOffersListHtml(type, selectedOffers, allOffers) {
+  const offersList = allOffers
+    .find((offer) => offer.type === type)
+    .offers
+    .filter((offer) => selectedOffers.includes(offer.id));
+
   return offersList.map((offer) =>
     `<li class="event__offer">
       <span class="event__offer-title">${offer.title}</span>
@@ -12,14 +17,15 @@ function makeOffersListHtml(offersList) {
   ).join('');
 }
 
-function createEventTemplate(event) {
-  const { dateFrom, dateTo, type, destinationData, basePrice, isFavorite, selectedOffers } = event;
+function createEventTemplate(event, allDestinations, allOffers) {
+  const { dateFrom, dateTo, type, destination, basePrice, isFavorite, offers } = event;
 
+  const destinationData = allDestinations.find((dest) => dest.id === destination);
   const eventDate = formatDate(dateFrom, DATE_FORMAT.EVENT_DATE);
   const eventTimeFrom = formatDate(dateFrom, DATE_FORMAT.EVENT_TIME);
   const eventTimeTo = formatDate(dateTo, DATE_FORMAT.EVENT_TIME);
   const eventDuration = getEventDuration(dateFrom, dateTo);
-  const offersListHtml = makeOffersListHtml(selectedOffers);
+  const offersListHtml = makeOffersListHtml(type, offers, allOffers);
 
   return `<div class="event">
             <time class="event__date" datetime="${dateFrom}">${eventDate}</time>
@@ -56,13 +62,17 @@ function createEventTemplate(event) {
 
 export default class EventView extends AbstractView {
   #event = null;
+  #allDestinations = [];
+  #allOffers = [];
   #handleEditClick = null;
   #handleFavoriteBtnClick = null;
 
-  constructor(event, onEditClick, onFavoriteBtnClick) {
+  constructor(event, allDestinations, allOffers, onEditClick, onFavoriteBtnClick) {
     super();
 
     this.#event = event;
+    this.#allDestinations = allDestinations;
+    this.#allOffers = allOffers;
     this.#handleEditClick = onEditClick;
     this.#handleFavoriteBtnClick = onFavoriteBtnClick;
     this.element.querySelector('.event__rollup-btn')
@@ -72,7 +82,7 @@ export default class EventView extends AbstractView {
   }
 
   get template() {
-    return createEventTemplate(this.#event);
+    return createEventTemplate(this.#event, this.#allDestinations, this.#allOffers);
   }
 
   #editClickHandler = (evt) => {
