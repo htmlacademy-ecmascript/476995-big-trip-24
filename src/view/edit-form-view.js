@@ -26,11 +26,6 @@ function makeDestinationHtml(city) {
               <div class="event__photos-container">
                 <div class="event__photos-tape">
                   ${makePicturesList(city.pictures)}
-                  <img class="event__photo" src="img/photos/1.jpg" alt="Event photo">
-                  <img class="event__photo" src="img/photos/2.jpg" alt="Event photo">
-                  <img class="event__photo" src="img/photos/3.jpg" alt="Event photo">
-                  <img class="event__photo" src="img/photos/4.jpg" alt="Event photo">
-                  <img class="event__photo" src="img/photos/5.jpg" alt="Event photo">
                 </div>
               </div>
             </section>`;
@@ -166,6 +161,10 @@ export default class EditFormView extends AbstractStatefulView {
     return createEditFormTemplate(this._state, this.#allDestinations, this.#allOffers);
   }
 
+  reset(event) {
+    this.updateElement(event);
+  }
+
   _restoreHandlers() {
     this.element.addEventListener('submit', this.#formSubmitHandler);
     this.element.querySelector('.event__rollup-btn')
@@ -185,6 +184,7 @@ export default class EditFormView extends AbstractStatefulView {
   #editClickHandler = (evt) => {
     evt.preventDefault();
 
+    this.reset(this.#event);
     this.#handleEditClick();
   };
 
@@ -197,8 +197,10 @@ export default class EditFormView extends AbstractStatefulView {
 
   #changeDestionationHandler = (evt) => {
     const newDestinationName = evt.target.value;
-    const destinationId = this.#allDestinations.find((destination) => destination.name === newDestinationName).id;
+    const destinationId = this.#allDestinations.find((destination) => destination.name === newDestinationName)?.id;
 
-    this.updateElement({ destination: destinationId });
+    if (destinationId) {
+      this.updateElement({ destination: destinationId });
+    }
   };
 }

@@ -92,6 +92,7 @@ export default class TripEventPresenter {
   #escKeyDownHandler = (evt) => {
     if (evt.key === 'Escape') {
       evt.preventDefault();
+      this.#editFormViewComponent.reset(this.#tripEvent);
       this.#replaceEditFormToEvent();
       document.removeEventListener('keydown', this.#escKeyDownHandler);
     }
