@@ -1,5 +1,7 @@
-import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import dayjs from 'dayjs';
+import flatpickr from 'flatpickr';
+import 'flatpickr/dist/flatpickr.min.css';
+import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import { formatDate, capitalizeFirstLetter } from '../utils/general.js';
 import { EVENT_TYPES, DATE_FORMAT } from '../constants.js';
 
@@ -151,6 +153,9 @@ export default class AddFormView extends AbstractStatefulView {
   #handleFormSubmit = null;
   #handleEditClick = null;
 
+  #datepickerFrom = null;
+  #datepickerTo = null;
+
   constructor(allDestinations, allOffers, onFormSubmit, onEditClick) {
     super();
 
@@ -169,6 +174,24 @@ export default class AddFormView extends AbstractStatefulView {
     return createAddFormTemplate(this._state, this.#allDestinations, this.#allOffers);
   }
 
+  reset() {
+    this.updateElement(BLANK_EVENT);
+  }
+
+  removeElement() {
+    super.removeElement();
+
+    if (this.#datepickerFrom) {
+      this.#datepickerFrom.destroy();
+      this.#datepickerFrom = null;
+    }
+
+    if (this.#datepickerTo) {
+      this.#datepickerTo.destroy();
+      this.#datepickerTo = null;
+    }
+  }
+
   _restoreHandlers() {
     this.element.addEventListener('submit', this.#formSubmitHandler);
     this.element.querySelector('.event__rollup-btn')
@@ -177,6 +200,35 @@ export default class AddFormView extends AbstractStatefulView {
       .addEventListener('change', this.#changeEventTypeHandler);
     this.element.querySelector('.event__input--destination')
       .addEventListener('change', this.#changeDestionationHandler);
+
+    this.#setDatepicker();
+  }
+
+  #setDatepicker() {
+    this.#datepickerFrom = flatpickr(
+      this.element.querySelector('#event-start-time-1'),
+      {
+        dateFormat: DATE_FORMAT.DATEPICKER_DATE,
+        enableTime: true,
+        // eslint-disable-next-line camelcase
+        time_24hr: true,
+        defaultDate: this._state.dateFrom,
+        onChange: this.#dateFromChangeHandler
+      }
+    );
+
+    this.#datepickerTo = flatpickr(
+      this.element.querySelector('#event-end-time-1'),
+      {
+        dateFormat: DATE_FORMAT.DATEPICKER_DATE,
+        enableTime: true,
+        // eslint-disable-next-line camelcase
+        time_24hr: true,
+        defaultDate: this._state.dateTo,
+        minDate: this._state.dateFrom,
+        onChange: this.#dateToChangeHandler
+      }
+    );
   }
 
   #formSubmitHandler = (evt) => {
@@ -203,5 +255,17 @@ export default class AddFormView extends AbstractStatefulView {
     const destinationId = this.#allDestinations.find((destination) => destination.name === newDestinationName).id;
 
     this.updateElement({ destination: destinationId });
+  };
+
+  #dateFromChangeHandler = ([dateFrom]) => {
+    if (dayjs(this._state.dateTo).diff(dateFrom, 'minutes') < 0) {
+      this.updateElement({ dateFrom, dateTo: dateFrom });
+    } else {
+      this.updateElement({ dateFrom });
+    }
+  };
+
+  #dateToChangeHandler = ([dateTo]) => {
+    this.updateElement({ dateTo });
   };
 }
