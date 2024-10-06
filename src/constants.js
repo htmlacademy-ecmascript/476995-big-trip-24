@@ -3,7 +3,8 @@ const EVENT_TYPES = ['taxi', 'bus', 'train', 'ship', 'drive', 'flight', 'check-i
 const DATE_FORMAT = {
   EVENT_DATE: 'MMM DD',
   EVENT_TIME: 'HH:mm',
-  INPUT_DATE: 'DD/MM/YY HH:mm'
+  INPUT_DATE: 'DD/MM/YY HH:mm',
+  DATEPICKER_DATE: 'd/m/y H:i'
 };
 
 const SortType = {

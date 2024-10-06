@@ -1,3 +1,6 @@
+import dayjs from 'dayjs';
+import flatpickr from 'flatpickr';
+import 'flatpickr/dist/flatpickr.min.css';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import { formatDate, capitalizeFirstLetter } from '../utils/general.js';
 import { EVENT_TYPES, DATE_FORMAT } from '../constants.js';
@@ -26,11 +29,6 @@ function makeDestinationHtml(city) {
               <div class="event__photos-container">
                 <div class="event__photos-tape">
                   ${makePicturesList(city.pictures)}
-                  <img class="event__photo" src="img/photos/1.jpg" alt="Event photo">
-                  <img class="event__photo" src="img/photos/2.jpg" alt="Event photo">
-                  <img class="event__photo" src="img/photos/3.jpg" alt="Event photo">
-                  <img class="event__photo" src="img/photos/4.jpg" alt="Event photo">
-                  <img class="event__photo" src="img/photos/5.jpg" alt="Event photo">
                 </div>
               </div>
             </section>`;
@@ -148,6 +146,9 @@ export default class EditFormView extends AbstractStatefulView {
   #handleFormSubmit = null;
   #handleEditClick = null;
 
+  #datepickerFrom = null;
+  #datepickerTo = null;
+
   constructor(event, allDestinations, allOffers, onFormSubmit, onEditClick) {
     super();
 
@@ -166,6 +167,24 @@ export default class EditFormView extends AbstractStatefulView {
     return createEditFormTemplate(this._state, this.#allDestinations, this.#allOffers);
   }
 
+  reset(event) {
+    this.updateElement(event);
+  }
+
+  removeElement() {
+    super.removeElement();
+
+    if (this.#datepickerFrom) {
+      this.#datepickerFrom.destroy();
+      this.#datepickerFrom = null;
+    }
+
+    if (this.#datepickerTo) {
+      this.#datepickerTo.destroy();
+      this.#datepickerTo = null;
+    }
+  }
+
   _restoreHandlers() {
     this.element.addEventListener('submit', this.#formSubmitHandler);
     this.element.querySelector('.event__rollup-btn')
@@ -174,6 +193,35 @@ export default class EditFormView extends AbstractStatefulView {
       .addEventListener('change', this.#changeEventTypeHandler);
     this.element.querySelector('.event__input--destination')
       .addEventListener('change', this.#changeDestionationHandler);
+
+    this.#setDatepicker();
+  }
+
+  #setDatepicker() {
+    this.#datepickerFrom = flatpickr(
+      this.element.querySelector('#event-start-time-1'),
+      {
+        dateFormat: DATE_FORMAT.DATEPICKER_DATE,
+        enableTime: true,
+        // eslint-disable-next-line camelcase
+        time_24hr: true,
+        defaultDate: this._state.dateFrom,
+        onChange: this.#dateFromChangeHandler
+      }
+    );
+
+    this.#datepickerTo = flatpickr(
+      this.element.querySelector('#event-end-time-1'),
+      {
+        dateFormat: DATE_FORMAT.DATEPICKER_DATE,
+        enableTime: true,
+        // eslint-disable-next-line camelcase
+        time_24hr: true,
+        defaultDate: this._state.dateTo,
+        minDate: this._state.dateFrom,
+        onChange: this.#dateToChangeHandler
+      }
+    );
   }
 
   #formSubmitHandler = (evt) => {
@@ -185,6 +233,7 @@ export default class EditFormView extends AbstractStatefulView {
   #editClickHandler = (evt) => {
     evt.preventDefault();
 
+    this.reset(this.#event);
     this.#handleEditClick();
   };
 
@@ -197,8 +246,22 @@ export default class EditFormView extends AbstractStatefulView {
 
   #changeDestionationHandler = (evt) => {
     const newDestinationName = evt.target.value;
-    const destinationId = this.#allDestinations.find((destination) => destination.name === newDestinationName).id;
+    const destinationId = this.#allDestinations.find((destination) => destination.name === newDestinationName)?.id;
 
-    this.updateElement({ destination: destinationId });
+    if (destinationId) {
+      this.updateElement({ destination: destinationId });
+    }
+  };
+
+  #dateFromChangeHandler = ([dateFrom]) => {
+    if (dayjs(this._state.dateTo).diff(dateFrom, 'minutes') < 0) {
+      this.updateElement({ dateFrom, dateTo: dateFrom });
+    } else {
+      this.updateElement({ dateFrom });
+    }
+  };
+
+  #dateToChangeHandler = ([dateTo]) => {
+    this.updateElement({ dateTo });
   };
 }
