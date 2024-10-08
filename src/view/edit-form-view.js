@@ -53,7 +53,8 @@ function makeOffersHtml(eventType, allOffers, selectedOffers) {
     const isChecked = selectedOffers.includes(offer.id);
 
     return `<div class="event__offer-selector">
-              <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offer.id}" type="checkbox" name="event-offer-${offer.id}" ${isChecked ? 'checked' : ''}>
+              <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offer.id}" type="checkbox"
+                name="event-offer-${offer.id}" ${isChecked ? 'checked' : ''} data-offer-id="${offer.id}">
               <label class="event__offer-label" for="event-offer-${offer.id}">
                 <span class="event__offer-title">${offer.title}</span>
                 &plus;&euro;&nbsp;
@@ -186,16 +187,39 @@ export default class EditFormView extends AbstractStatefulView {
   }
 
   _restoreHandlers() {
-    this.element.addEventListener('submit', this.#formSubmitHandler);
-    this.element.querySelector('.event__rollup-btn')
-      .addEventListener('click', this.#editClickHandler);
-    this.element.querySelector('.event__type-list')
-      .addEventListener('change', this.#changeEventTypeHandler);
-    this.element.querySelector('.event__input--destination')
-      .addEventListener('change', this.#changeDestionationHandler);
-
+    this.element.querySelector('.event__type-list').addEventListener('change', this.#changeEventTypeHandler);
+    this.element.querySelector('.event__input--destination').addEventListener('change', this.#changeDestionationHandler);
     this.#setDatepicker();
+    this.element.querySelector('.event__input--price').addEventListener('change', this.#changePriceHandler);
+    this.element.addEventListener('submit', this.#formSubmitHandler);
+    this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#editClickHandler);
+    const offerSelectorEl = this.element.querySelector('.event__available-offers');
+    if (offerSelectorEl) {
+      offerSelectorEl.addEventListener('change', this.#changeOffersHandler);
+    }
   }
+
+  #changeEventTypeHandler = (evt) => {
+    evt.preventDefault();
+
+    const newType = evt.target.value;
+    this.updateElement({ type: newType, offers: [] });
+  };
+
+  #changeDestionationHandler = (evt) => {
+    const newDestinationName = evt.target.value;
+    const destinationId = this.#allDestinations.find((destination) => destination.name === newDestinationName)?.id;
+
+    if (destinationId) {
+      this.updateElement({ destination: destinationId });
+    }
+  };
+
+  #changePriceHandler = (evt) => {
+    const newPrice = +evt.target.value;
+
+    this._setState({ basePrice: newPrice });
+  };
 
   #setDatepicker() {
     this.#datepickerFrom = flatpickr(
@@ -224,35 +248,6 @@ export default class EditFormView extends AbstractStatefulView {
     );
   }
 
-  #formSubmitHandler = (evt) => {
-    evt.preventDefault();
-
-    this.#handleFormSubmit();
-  };
-
-  #editClickHandler = (evt) => {
-    evt.preventDefault();
-
-    this.reset(this.#event);
-    this.#handleEditClick();
-  };
-
-  #changeEventTypeHandler = (evt) => {
-    evt.preventDefault();
-
-    const newType = evt.target.value;
-    this.updateElement({ type: newType, offers: [] });
-  };
-
-  #changeDestionationHandler = (evt) => {
-    const newDestinationName = evt.target.value;
-    const destinationId = this.#allDestinations.find((destination) => destination.name === newDestinationName)?.id;
-
-    if (destinationId) {
-      this.updateElement({ destination: destinationId });
-    }
-  };
-
   #dateFromChangeHandler = ([dateFrom]) => {
     if (dayjs(this._state.dateTo).diff(dateFrom, 'minutes') < 0) {
       this.updateElement({ dateFrom, dateTo: dateFrom });
@@ -263,5 +258,36 @@ export default class EditFormView extends AbstractStatefulView {
 
   #dateToChangeHandler = ([dateTo]) => {
     this.updateElement({ dateTo });
+  };
+
+  #formSubmitHandler = (evt) => {
+    evt.preventDefault();
+
+    this.#handleFormSubmit(this._state);
+  };
+
+  #editClickHandler = (evt) => {
+    evt.preventDefault();
+
+    this.reset(this.#event);
+    this.#handleEditClick();
+  };
+
+  #changeOffersHandler = (evt) => {
+    evt.preventDefault();
+
+    if (!evt.target.classList.contains('event__offer-checkbox')) {
+      return;
+    }
+
+    let currentOffers = this._state.offers;
+
+    if (evt.target.checked) {
+      currentOffers.push(evt.target.dataset.offerId);
+    } else {
+      currentOffers = currentOffers.filter((offerId) => offerId !== evt.target.dataset.offerId);
+    }
+
+    this._setState({ offers: currentOffers });
   };
 }

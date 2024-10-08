@@ -1,4 +1,5 @@
 import { remove, render, replace } from '../framework/render.js';
+import { UserAction, UpdateType } from '../constants.js';
 import TripEventsListItemView from '../view/trip-events-list-item-view.js';
 import EventView from '../view/event-view.js';
 import EditFormView from '../view/edit-form-view.js';
@@ -106,11 +107,21 @@ export default class TripEventPresenter {
     }
   };
 
-  #handleFormSubmit = () => {
+  #handleFormSubmit = (tripEvent) => {
+    this.#handleUpdateTripEvent(
+      UserAction.UPDATE_TASK,
+      UpdateType.MINOR,
+      tripEvent
+    );
+
     this.#replaceEditFormToEvent();
   };
 
   #handleFavoriteBtnClick = () => {
-    this.#handleUpdateTripEvent({ ...this.#tripEvent, isFavorite: !this.#tripEvent.isFavorite });
+    this.#handleUpdateTripEvent(
+      UserAction.UPDATE_TASK,
+      UpdateType.PATCH,
+      { ...this.#tripEvent, isFavorite: !this.#tripEvent.isFavorite }
+    );
   };
 }

@@ -22,4 +22,16 @@ const FilterType = {
   PAST: 'past'
 };
 
-export { EVENT_TYPES, DATE_FORMAT, SortType, FilterType };
+const UserAction = {
+  ADD_TASK: 'ADD_TASK',
+  UPDATE_TASK: 'UPDATE_TASK',
+  DELETE_TASK: 'DELETE_TASK',
+};
+
+const UpdateType = {
+  PATCH: 'PATCH',
+  MINOR: 'MINOR',
+  MAJOR: 'MAJOR',
+};
+
+export { EVENT_TYPES, DATE_FORMAT, SortType, FilterType, UserAction, UpdateType };

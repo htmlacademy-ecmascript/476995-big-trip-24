@@ -1,5 +1,5 @@
 import { render } from '../framework/render.js';
-import { SortType } from '../constants.js';
+import { SortType, UserAction, UpdateType } from '../constants.js';
 import { sortByDate, sortByTime, sortByPrice } from '../utils/sort.js';
 import TripEventPresenter from './trip-event-presenter.js';
 import ListEmptyView from '../view/list-empty-view.js';
@@ -14,7 +14,6 @@ export default class TripEventsPresenter {
 
   #tripEventsListViewComponent = new TripEventsListView();
 
-  #tripEvents = [];
   #destinations = [];
   #offers = [];
 
@@ -23,18 +22,16 @@ export default class TripEventsPresenter {
 
   constructor(tripEventsListContainer, tripEventsModel, destinationsModel, offersModel) {
     this.#tripEventsListContainer = tripEventsListContainer;
+
     this.#tripEventsModel = tripEventsModel;
     this.#destinationsModel = destinationsModel;
     this.#offersModel = offersModel;
+
+    this.#tripEventsModel.addObserver(this.#handleModelEvent);
   }
 
   init() {
     if (this.#tripEventsModel.tripEvents.length > 0) {
-      this.#tripEvents = this.#tripEventsModel.tripEvents;
-      this.#sortTripEvents(this.#currentSortType);
-      this.#destinations = this.#destinationsModel.destinations;
-      this.#offers = this.#offersModel.offers;
-
       this.#renderSortList();
       render(this.#tripEventsListViewComponent, this.#tripEventsListContainer);
       this.#renderTripEvents();
@@ -43,20 +40,73 @@ export default class TripEventsPresenter {
     }
   }
 
+  get tripEvents() {
+    const tripEvents = [...this.#tripEventsModel.tripEvents];
+
+    switch (this.#currentSortType) {
+      case SortType.DAY:
+        return tripEvents.sort(sortByDate);
+      case SortType.TIME:
+        return tripEvents.sort(sortByTime);
+      case SortType.PRICE:
+        return tripEvents.sort(sortByPrice);
+    }
+
+    return tripEvents;
+  }
+
+  get destinations() {
+    return this.#destinationsModel.destinations;
+  }
+
+  get offers() {
+    return this.#offersModel.offers;
+  }
+
+  #handleViewAction = (actionType, updateType, eventToUpdate) => {
+    switch (actionType) {
+      case UserAction.ADD_TASK:
+        this.#tripEventsModel.addEvent(updateType, eventToUpdate);
+        break;
+      case UserAction.UPDATE_TASK:
+        this.#tripEventsModel.updateEvent(updateType, eventToUpdate);
+        break;
+      case UserAction.DELETE_TASK:
+        this.#tripEventsModel.deleteEvent(updateType, eventToUpdate);
+        break;
+    }
+  };
+
+  #handleModelEvent = (updateType, updatedEvent) => {
+    switch (updateType) {
+      case UpdateType.PATCH:
+        // - обновить часть списка (например, когда поменялось описание)
+        this.#tripEventPresenters.get(updatedEvent.id).init(updatedEvent);
+        break;
+      case UpdateType.MINOR:
+        this.#clearEventsList();
+        this.#renderTripEvents();
+        break;
+      case UpdateType.MAJOR:
+        // - обновить всю доску (например, при переключении фильтра)
+        break;
+    }
+  };
+
   #renderSortList() {
     const sortListView = new SortListView(this.#handleSortTypeChange);
     render(sortListView, this.#tripEventsListContainer);
   }
 
   #renderTripEvents() {
-    for (let i = 0; i < this.#tripEvents.length; i++) {
-      this.#renderTripEvent(this.#tripEvents[i]);
+    for (let i = 0; i < this.tripEvents.length; i++) {
+      this.#renderTripEvent(this.tripEvents[i]);
     }
   }
 
   #renderTripEvent(tripEvent) {
-    const tripEventPresenter = new TripEventPresenter(this.#tripEventsListViewComponent.element, this.#destinations,
-      this.#offers, this.#handleUpdateTripEvent, this.#handleStateChange
+    const tripEventPresenter = new TripEventPresenter(this.#tripEventsListViewComponent.element, this.destinations,
+      this.offers, this.#handleViewAction, this.#handleStateChange
     );
     tripEventPresenter.init(tripEvent);
     this.#tripEventPresenters.set(tripEvent.id, tripEventPresenter);
@@ -67,35 +117,14 @@ export default class TripEventsPresenter {
       return;
     }
 
-    this.#sortTripEvents(sortType);
+    this.#currentSortType = sortType;
     this.#clearEventsList();
     this.#renderTripEvents();
-  };
-
-  #handleUpdateTripEvent = (updatedEvent) => {
-    this.#tripEvents = this.#tripEvents.map((event) => event.id === updatedEvent.id ? updatedEvent : event);
-    this.#tripEventPresenters.get(updatedEvent.id).init(updatedEvent);
   };
 
   #handleStateChange = () => {
     this.#tripEventPresenters.forEach((presenter) => presenter.setDefaultState());
   };
-
-  #sortTripEvents(sortType) {
-    switch (sortType) {
-      case SortType.DAY:
-        this.#tripEvents.sort(sortByDate);
-        break;
-      case SortType.TIME:
-        this.#tripEvents.sort(sortByTime);
-        break;
-      case SortType.PRICE:
-        this.#tripEvents.sort(sortByPrice);
-        break;
-    }
-
-    this.#currentSortType = sortType;
-  }
 
   #clearEventsList() {
     this.#tripEventPresenters.forEach((presenter) => presenter.destroy());
