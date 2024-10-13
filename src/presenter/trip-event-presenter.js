@@ -46,7 +46,7 @@ export default class TripEventPresenter {
     this.#eventViewComponent = new EventView(this.#tripEvent, this.#allDestinations, this.#allOffers,
       this.#handleEditEventClick, this.#handleFavoriteBtnClick);
     this.#editFormViewComponent = new EditFormView(this.#tripEvent, this.#allDestinations, this.#allOffers,
-      this.#handleFormSubmit, this.#handleEditEventClick);
+      this.#handleFormSubmit, this.#handleEditEventClick, this.#handleDeleteClick);
 
     if (prevEventViewComponent === null || prevEditFormViewComponent === null) {
       render(this.#eventViewComponent, this.#tripEventsListItemComponent.element);
@@ -109,7 +109,7 @@ export default class TripEventPresenter {
 
   #handleFormSubmit = (tripEvent) => {
     this.#handleUpdateTripEvent(
-      UserAction.UPDATE_TASK,
+      UserAction.UPDATE_EVENT,
       UpdateType.MINOR,
       tripEvent
     );
@@ -117,9 +117,17 @@ export default class TripEventPresenter {
     this.#replaceEditFormToEvent();
   };
 
+  #handleDeleteClick = (tripEvent) => {
+    this.#handleUpdateTripEvent(
+      UserAction.DELETE_EVENT,
+      UpdateType.MINOR,
+      tripEvent
+    );
+  };
+
   #handleFavoriteBtnClick = () => {
     this.#handleUpdateTripEvent(
-      UserAction.UPDATE_TASK,
+      UserAction.UPDATE_EVENT,
       UpdateType.PATCH,
       { ...this.#tripEvent, isFavorite: !this.#tripEvent.isFavorite }
     );

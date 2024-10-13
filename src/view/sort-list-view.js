@@ -1,11 +1,11 @@
 import AbstractView from '../framework/view/abstract-view';
 import { SortType } from '../constants.js';
 
-function createSortListTemplate() {
+function createSortListTemplate(currentSortType) {
   return `<form class="trip-events__trip-sort  trip-sort" action="#" method="get">
             <div class="trip-sort__item  trip-sort__item--${SortType.DAY}">
               <input id="sort-${SortType.DAY}" class="trip-sort__input  visually-hidden" type="radio" name="trip-sort"
-                value="sort-${SortType.DAY}" checked data-sort-type="${SortType.DAY}">
+                value="sort-${SortType.DAY}" ${SortType.DAY === currentSortType ? 'checked' : ''} data-sort-type="${SortType.DAY}">
               <label class="trip-sort__btn" for="sort-${SortType.DAY}">${SortType.DAY}</label>
             </div>
 
@@ -17,13 +17,13 @@ function createSortListTemplate() {
 
             <div class="trip-sort__item  trip-sort__item--${SortType.TIME}">
               <input id="sort-${SortType.TIME}" class="trip-sort__input  visually-hidden" type="radio" name="trip-sort"
-                value="sort-${SortType.TIME}" data-sort-type="${SortType.TIME}">
+                value="sort-${SortType.TIME}" ${SortType.TIME === currentSortType ? 'checked' : ''} data-sort-type="${SortType.TIME}">
               <label class="trip-sort__btn" for="sort-${SortType.TIME}">${SortType.TIME}</label>
             </div>
 
             <div class="trip-sort__item  trip-sort__item--${SortType.PRICE}">
               <input id="sort-${SortType.PRICE}" class="trip-sort__input  visually-hidden" type="radio" name="trip-sort"
-                value="sort-${SortType.PRICE}" data-sort-type="${SortType.PRICE}">
+                value="sort-${SortType.PRICE}" ${SortType.PRICE === currentSortType ? 'checked' : ''} data-sort-type="${SortType.PRICE}">
               <label class="trip-sort__btn" for="sort-${SortType.PRICE}">${SortType.PRICE}</label>
             </div>
 
@@ -36,18 +36,20 @@ function createSortListTemplate() {
 }
 
 export default class SortListView extends AbstractView {
+  #currentSortType = null;
   #handerSortTypeChange = null;
 
-  constructor(onSortTypeChange) {
+  constructor(currentSortType, onSortTypeChange) {
     super();
 
+    this.#currentSortType = currentSortType;
     this.#handerSortTypeChange = onSortTypeChange;
 
     this.element.addEventListener('change', this.#sortTypeChangeHandler);
   }
 
   get template() {
-    return createSortListTemplate();
+    return createSortListTemplate(this.#currentSortType);
   }
 
   #sortTypeChangeHandler = (evt) => {

@@ -1,6 +1,7 @@
 import dayjs from 'dayjs';
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
+import he from 'he';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import { formatDate, capitalizeFirstLetter } from '../utils/general.js';
 import { EVENT_TYPES, DATE_FORMAT } from '../constants.js';
@@ -104,7 +105,8 @@ function createEditFormTemplate(event, allDestinations, allOffers) {
                 <label class="event__label  event__type-output" for="event-destination-1">
                     ${type}
                 </label>
-                <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${destinationData.name}" list="destination-list-1">
+                <input class="event__input  event__input--destination" id="event-destination-1" type="text"
+                  name="event-destination" value="${he.encode(destinationData?.name || '')}" list="destination-list-1">
                 <datalist id="destination-list-1">
                   ${citiesListHtml}
                 </datalist>
@@ -123,7 +125,8 @@ function createEditFormTemplate(event, allDestinations, allOffers) {
                   <span class="visually-hidden">Price</span>
                   &euro;
                 </label>
-                <input class="event__input  event__input--price" id="event-price-1" type="text" name="event-price" value="${basePrice}">
+                <input class="event__input  event__input--price" id="event-price-1" type="number" name="event-price"
+                  value="${he.encode(basePrice.toString())}">
               </div>
 
               <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
@@ -146,11 +149,12 @@ export default class EditFormView extends AbstractStatefulView {
 
   #handleFormSubmit = null;
   #handleEditClick = null;
+  #handleDeleteClick = null;
 
   #datepickerFrom = null;
   #datepickerTo = null;
 
-  constructor(event, allDestinations, allOffers, onFormSubmit, onEditClick) {
+  constructor(event, allDestinations, allOffers, onFormSubmit, onEditClick, onDeleteClick) {
     super();
 
     this.#event = event;
@@ -160,6 +164,7 @@ export default class EditFormView extends AbstractStatefulView {
 
     this.#handleFormSubmit = onFormSubmit;
     this.#handleEditClick = onEditClick;
+    this.#handleDeleteClick = onDeleteClick;
 
     this._restoreHandlers();
   }
@@ -192,6 +197,7 @@ export default class EditFormView extends AbstractStatefulView {
     this.#setDatepicker();
     this.element.querySelector('.event__input--price').addEventListener('change', this.#changePriceHandler);
     this.element.addEventListener('submit', this.#formSubmitHandler);
+    this.element.querySelector('.event__reset-btn').addEventListener('click', this.#deleteClickHandler);
     this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#editClickHandler);
     const offerSelectorEl = this.element.querySelector('.event__available-offers');
     if (offerSelectorEl) {
@@ -264,6 +270,12 @@ export default class EditFormView extends AbstractStatefulView {
     evt.preventDefault();
 
     this.#handleFormSubmit(this._state);
+  };
+
+  #deleteClickHandler = (evt) => {
+    evt.preventDefault();
+
+    this.#handleDeleteClick(this._state);
   };
 
   #editClickHandler = (evt) => {

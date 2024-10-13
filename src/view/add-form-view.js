@@ -1,14 +1,15 @@
 import dayjs from 'dayjs';
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
+import he from 'he';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import { formatDate, capitalizeFirstLetter } from '../utils/general.js';
 import { EVENT_TYPES, DATE_FORMAT } from '../constants.js';
 
 const BLANK_EVENT = {
-  dateFrom: dayjs().format(),
-  dateTo: dayjs().format(),
-  type: 'taxi',
+  dateFrom: null,
+  dateTo: null,
+  type: 'flight',
   destination: '',
   basePrice: 0,
   offers: []
@@ -62,7 +63,8 @@ function makeOffersHtml(eventType, allOffers, selectedOffers) {
     const isChecked = selectedOffers.includes(offer.id);
 
     return `<div class="event__offer-selector">
-              <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offer.id}" type="checkbox" name="event-offer-${offer.id}" ${isChecked ? 'checked' : ''}>
+              <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offer.id}" type="checkbox"
+              name="event-offer-${offer.id}" ${isChecked ? 'checked' : ''}  data-offer-id="${offer.id}">
               <label class="event__offer-label" for="event-offer-${offer.id}">
                 <span class="event__offer-title">${offer.title}</span>
                 &plus;&euro;&nbsp;
@@ -112,7 +114,8 @@ function createAddFormTemplate(event, allDestinations, allOffers) {
                 <label class="event__label  event__type-output" for="event-destination-1">
                   ${type}
                 </label>
-                <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${destinationData?.name || ''}" list="destination-list-1">
+                <input class="event__input  event__input--destination" id="event-destination-1"
+                  type="text" name="event-destination" value="${he.encode(destinationData?.name || '')}" list="destination-list-1">
                 <datalist id="destination-list-1">
                   ${citiesListHtml}
                 </datalist>
@@ -131,7 +134,8 @@ function createAddFormTemplate(event, allDestinations, allOffers) {
                   <span class="visually-hidden">Price</span>
                   &euro;
                 </label>
-                <input class="event__input  event__input--price" id="event-price-1" type="text" name="event-price" value="${basePrice}">
+                <input class="event__input  event__input--price" id="event-price-1" type="number" name="event-price"
+                  value="${he.encode(basePrice.toString())}">
               </div>
 
               <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
@@ -151,12 +155,12 @@ export default class AddFormView extends AbstractStatefulView {
   #allOffers = [];
 
   #handleFormSubmit = null;
-  #handleEditClick = null;
+  #handleCancelClick = null;
 
   #datepickerFrom = null;
   #datepickerTo = null;
 
-  constructor(allDestinations, allOffers, onFormSubmit, onEditClick) {
+  constructor(allDestinations, allOffers, onFormSubmit, onCancelClick) {
     super();
 
     this.#event = BLANK_EVENT;
@@ -165,7 +169,7 @@ export default class AddFormView extends AbstractStatefulView {
     this.#allOffers = allOffers;
 
     this.#handleFormSubmit = onFormSubmit;
-    this.#handleEditClick = onEditClick;
+    this.#handleCancelClick = onCancelClick;
 
     this._restoreHandlers();
   }
@@ -193,16 +197,43 @@ export default class AddFormView extends AbstractStatefulView {
   }
 
   _restoreHandlers() {
-    this.element.addEventListener('submit', this.#formSubmitHandler);
-    this.element.querySelector('.event__rollup-btn')
-      .addEventListener('click', this.#editClickHandler);
-    this.element.querySelector('.event__type-list')
-      .addEventListener('change', this.#changeEventTypeHandler);
-    this.element.querySelector('.event__input--destination')
-      .addEventListener('change', this.#changeDestionationHandler);
-
+    this.element.querySelector('.event__type-list').addEventListener('change', this.#changeEventTypeHandler);
+    this.element.querySelector('.event__input--destination').addEventListener('change', this.#changeDestinationHandler);
     this.#setDatepicker();
+    this.element.querySelector('.event__input--price').addEventListener('change', this.#changePriceHandler);
+    this.element.addEventListener('submit', this.#formSubmitHandler);
+    this.element.querySelector('.event__reset-btn').addEventListener('click', this.#cancelClickHandler);
+    const offerSelectorEl = this.element.querySelector('.event__available-offers');
+    if (offerSelectorEl) {
+      offerSelectorEl.addEventListener('change', this.#changeOffersHandler);
+    }
   }
+
+  #changeEventTypeHandler = (evt) => {
+    evt.preventDefault();
+
+    const newType = evt.target.value;
+    this.updateElement({ type: newType, offers: [] });
+  };
+
+  #changeDestinationHandler = (evt) => {
+    const newDestinationName = evt.target.value;
+    const destinationId = this.#allDestinations.find((destination) => destination.name === newDestinationName).id;
+
+    this.updateElement({ destination: destinationId });
+  };
+
+  #dateFromChangeHandler = ([dateFrom]) => {
+    if (dayjs(this._state.dateTo).diff(dateFrom, 'minutes') < 0) {
+      this.updateElement({ dateFrom, dateTo: dateFrom });
+    } else {
+      this.updateElement({ dateFrom });
+    }
+  };
+
+  #dateToChangeHandler = ([dateTo]) => {
+    this.updateElement({ dateTo });
+  };
 
   #setDatepicker() {
     this.#datepickerFrom = flatpickr(
@@ -231,41 +262,39 @@ export default class AddFormView extends AbstractStatefulView {
     );
   }
 
+  #changePriceHandler = (evt) => {
+    const newPrice = +evt.target.value;
+
+    this._setState({ basePrice: newPrice });
+  };
+
   #formSubmitHandler = (evt) => {
     evt.preventDefault();
 
-    this.#handleFormSubmit();
+    this.#handleFormSubmit(this._state);
   };
 
-  #editClickHandler = (evt) => {
+  #cancelClickHandler = (evt) => {
     evt.preventDefault();
 
-    this.#handleEditClick();
+    this.#handleCancelClick();
   };
 
-  #changeEventTypeHandler = (evt) => {
+  #changeOffersHandler = (evt) => {
     evt.preventDefault();
 
-    const newType = evt.target.value;
-    this.updateElement({ type: newType, offers: [] });
-  };
-
-  #changeDestionationHandler = (evt) => {
-    const newDestinationName = evt.target.value;
-    const destinationId = this.#allDestinations.find((destination) => destination.name === newDestinationName).id;
-
-    this.updateElement({ destination: destinationId });
-  };
-
-  #dateFromChangeHandler = ([dateFrom]) => {
-    if (dayjs(this._state.dateTo).diff(dateFrom, 'minutes') < 0) {
-      this.updateElement({ dateFrom, dateTo: dateFrom });
-    } else {
-      this.updateElement({ dateFrom });
+    if (!evt.target.classList.contains('event__offer-checkbox')) {
+      return;
     }
-  };
 
-  #dateToChangeHandler = ([dateTo]) => {
-    this.updateElement({ dateTo });
+    let currentOffers = this._state.offers;
+
+    if (evt.target.checked) {
+      currentOffers.push(evt.target.dataset.offerId);
+    } else {
+      currentOffers = currentOffers.filter((offerId) => offerId !== evt.target.dataset.offerId);
+    }
+
+    this._setState({ offers: currentOffers });
   };
 }

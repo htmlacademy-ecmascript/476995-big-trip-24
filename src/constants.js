@@ -23,9 +23,9 @@ const FilterType = {
 };
 
 const UserAction = {
-  ADD_TASK: 'ADD_TASK',
-  UPDATE_TASK: 'UPDATE_TASK',
-  DELETE_TASK: 'DELETE_TASK',
+  ADD_EVENT: 'ADD_EVENT',
+  UPDATE_EVENT: 'UPDATE_EVENT',
+  DELETE_EVENT: 'DELETE_EVENT',
 };
 
 const UpdateType = {

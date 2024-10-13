@@ -2,7 +2,7 @@
 import Observable from '../framework/observable.js';
 import { getRandomMockTripEvents } from '../mock/trip-events-mock.js';
 
-const TRIP_EVENTS_AMOUNT = 3;
+const TRIP_EVENTS_AMOUNT = 5;
 
 export default class TripEventsModel extends Observable {
   #tripEvents = getRandomMockTripEvents(TRIP_EVENTS_AMOUNT);
