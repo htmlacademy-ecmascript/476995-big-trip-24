@@ -32,6 +32,10 @@ const UpdateType = {
   PATCH: 'PATCH',
   MINOR: 'MINOR',
   MAJOR: 'MAJOR',
+  INIT: 'INIT'
 };
 
-export { EVENT_TYPES, DATE_FORMAT, SortType, FilterType, UserAction, UpdateType };
+const AUTHORIZATION = 'Basic TZPk6NHiTsPq8mx';
+const END_POINT = 'https://24.objects.htmlacademy.pro/big-trip';
+
+export { EVENT_TYPES, DATE_FORMAT, SortType, FilterType, UserAction, UpdateType, AUTHORIZATION, END_POINT };

@@ -4,21 +4,26 @@ import { filter } from '../utils/filter.js';
 import { sortByDate, sortByTime, sortByPrice } from '../utils/sort.js';
 import AddEventPresenter from './add-event-presenter.js';
 import TripEventPresenter from './trip-event-presenter.js';
+import LoadingView from '../view/loading-view.js';
+import FailedLoadDataView from '../view/failed-load-data-view.js';
 import ListEmptyView from '../view/list-empty-view.js';
 import SortListView from '../view/sort-list-view.js';
 import TripEventsListView from '../view/trip-events-list-view.js';
 
 export default class TripEventsPresenter {
   #tripEventsListContainer = null;
+  #filterModel = null;
   #tripEventsModel = null;
   #destinationsModel = null;
   #offersModel = null;
-  #filterModel = null;
 
-  #sortComponent = null;
-  #tripEventsListViewComponent = new TripEventsListView();
+  #loadingComponent = new LoadingView();
+  #failedLoadDataComponent = new FailedLoadDataView();
   #noTripEventsComponent = null;
+  #tripEventsListViewComponent = new TripEventsListView();
+  #sortComponent = null;
 
+  #isLoading = true;
   #currentSortType = SortType.DAY;
   #addEventPresenter = null;
   #tripEventPresenters = new Map();
@@ -73,6 +78,12 @@ export default class TripEventsPresenter {
     this.#addEventPresenter.init();
   }
 
+  showError() {
+    this.#isLoading = false;
+    remove(this.#loadingComponent);
+    render(this.#failedLoadDataComponent, this.#tripEventsListContainer);
+  }
+
   #handleViewAction = (actionType, updateType, eventToUpdate) => {
     switch (actionType) {
       case UserAction.ADD_EVENT:
@@ -93,18 +104,32 @@ export default class TripEventsPresenter {
         this.#tripEventPresenters.get(updatedEvent.id).init(updatedEvent);
         break;
       case UpdateType.MINOR:
-        this.#clearEventsList();
+        this.#clearTripEventsBoard();
         this.#renderTripEventsBoard();
         break;
       case UpdateType.MAJOR:
-        this.#clearEventsList(true);
+        this.#clearTripEventsBoard(true);
         this.#renderTripEventsBoard();
         break;
+      case UpdateType.INIT:
+        this.#isLoading = false;
+        remove(this.#loadingComponent);
+        this.#renderTripEventsBoard();
     }
   };
 
+  #renderLoading() {
+    render(this.#loadingComponent, this.#tripEventsListContainer);
+  }
+
   #renderTripEventsBoard() {
-    if (this.#tripEventsModel.tripEvents.length === 0) {
+    if (this.#isLoading) {
+      this.#renderLoading();
+
+      return;
+    }
+
+    if (this.tripEvents.length === 0) {
       this.#noTripEventsComponent = new ListEmptyView(this.#filterModel.filter);
       render(this.#noTripEventsComponent, this.#tripEventsListContainer);
 
@@ -143,7 +168,7 @@ export default class TripEventsPresenter {
     }
 
     this.#currentSortType = sortType;
-    this.#clearEventsList();
+    this.#clearTripEventsBoard();
     this.#renderTripEventsBoard();
   };
 
@@ -152,7 +177,7 @@ export default class TripEventsPresenter {
     this.#tripEventPresenters.forEach((presenter) => presenter.setDefaultState());
   };
 
-  #clearEventsList(resetSort = false) {
+  #clearTripEventsBoard(resetSort = false) {
     if (this.#noTripEventsComponent) {
       remove(this.#noTripEventsComponent);
     }
@@ -161,6 +186,7 @@ export default class TripEventsPresenter {
     this.#addEventPresenter.destroy();
     this.#tripEventPresenters.forEach((presenter) => presenter.destroy());
     this.#tripEventPresenters.clear();
+    remove(this.#tripEventsListViewComponent);
 
     if (resetSort) {
       this.#currentSortType = SortType.DAY;
