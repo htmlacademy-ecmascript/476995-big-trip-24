@@ -20,14 +20,14 @@ const filterPresenter = new FiltersPresenter(filterContainerEl, filterModel, tri
 const tripBoardContainerEl = document.querySelector('.trip-events');
 const destinationsModel = new DestinationsModel(new ApiService(END_POINT, AUTHORIZATION));
 const offersModel = new OffersModel(new ApiService(END_POINT, AUTHORIZATION));
-const tripEventPresenter =
+const tripEventsPresenter =
   new TripEventsPresenter(tripBoardContainerEl, tripEventsModel, destinationsModel, offersModel, filterModel,
     handleAddEventFormClose);
 
 const addEventButtonComponent = new AddEventButtonView(handleAddEventButtonClick);
 
 function handleAddEventButtonClick() {
-  tripEventPresenter.addTripEvent();
+  tripEventsPresenter.addTripEvent();
   addEventButtonComponent.element.disabled = true;
 }
 
@@ -36,9 +36,9 @@ function handleAddEventFormClose() {
 }
 
 filterPresenter.init();
-tripEventPresenter.init();
+tripEventsPresenter.init();
 
 Promise.all([destinationsModel.init(), offersModel.init()])
   .then(() => tripEventsModel.init())
   .then(() => render(addEventButtonComponent, tripMainContainerEl))
-  .catch(() => tripEventPresenter.showError());
+  .catch(() => tripEventsPresenter.showError());

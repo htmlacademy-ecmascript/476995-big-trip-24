@@ -1,4 +1,3 @@
-import { nanoid } from 'nanoid';
 import { remove, render, RenderPosition } from '../framework/render.js';
 import { UpdateType, UserAction } from '../constants.js';
 import AddFormView from '../view/add-form-view.js';
@@ -34,6 +33,24 @@ export default class AddEventPresenter {
     document.addEventListener('keydown', this.#escKeyDownHandler);
   }
 
+  setSaving() {
+    this.#addEventComponent.updateElement({
+      isDisabled: true,
+      isSaving: true
+    });
+  }
+
+  setAborting() {
+    const resetFormState = () => {
+      this.#addEventComponent.updateElement({
+        isDisabled: false,
+        isSaving: false
+      });
+    };
+
+    this.#addEventComponent.shake(resetFormState);
+  }
+
   destroy() {
     if (this.#addEventComponent === null) {
       return;
@@ -51,10 +68,8 @@ export default class AddEventPresenter {
     this.#handleDataChange(
       UserAction.ADD_EVENT,
       UpdateType.MAJOR,
-      { id: nanoid(), ...tripEvent }
+      tripEvent
     );
-
-    this.destroy();
   };
 
   #handleCancelClick = () => {

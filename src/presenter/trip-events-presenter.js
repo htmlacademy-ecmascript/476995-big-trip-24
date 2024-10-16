@@ -1,4 +1,5 @@
 import { remove, render } from '../framework/render.js';
+import UiBlocker from '../framework/ui-blocker/ui-blocker.js';
 import { SortType, UserAction, UpdateType, FilterType } from '../constants.js';
 import { filter } from '../utils/filter.js';
 import { sortByDate, sortByTime, sortByPrice } from '../utils/sort.js';
@@ -9,6 +10,11 @@ import FailedLoadDataView from '../view/failed-load-data-view.js';
 import ListEmptyView from '../view/list-empty-view.js';
 import SortListView from '../view/sort-list-view.js';
 import TripEventsListView from '../view/trip-events-list-view.js';
+
+const TimeLimit = {
+  LOWER_LIMIT: 350,
+  UPPER_LIMIT: 1000,
+};
 
 export default class TripEventsPresenter {
   #tripEventsListContainer = null;
@@ -23,10 +29,17 @@ export default class TripEventsPresenter {
   #tripEventsListViewComponent = new TripEventsListView();
   #sortComponent = null;
 
+  #handleAddTaskDestroy = null;
+
   #isLoading = true;
   #currentSortType = SortType.DAY;
   #addEventPresenter = null;
   #tripEventPresenters = new Map();
+
+  #uiBlocker = new UiBlocker({
+    lowerLimit: TimeLimit.LOWER_LIMIT,
+    upperLimit: TimeLimit.UPPER_LIMIT
+  });
 
   constructor(tripEventsListContainer, tripEventsModel, destinationsModel, offersModel, filterModel, onAddTaskDestroy) {
     this.#tripEventsListContainer = tripEventsListContainer;
@@ -36,8 +49,7 @@ export default class TripEventsPresenter {
     this.#offersModel = offersModel;
     this.#filterModel = filterModel;
 
-    this.#addEventPresenter = new AddEventPresenter(this.#tripEventsListViewComponent.element, this.destinations, this.offers,
-      this.#handleViewAction, onAddTaskDestroy);
+    this.#handleAddTaskDestroy = onAddTaskDestroy;
 
     this.#tripEventsModel.addObserver(this.#handleModelEvent);
     this.#filterModel.addObserver(this.#handleModelEvent);
@@ -75,6 +87,9 @@ export default class TripEventsPresenter {
   addTripEvent() {
     this.#currentSortType = SortType.DAY;
     this.#filterModel.setFilter(UpdateType.MAJOR, FilterType.EVERYTHING);
+    this.#addEventPresenter = new AddEventPresenter(this.#tripEventsListViewComponent.element, this.destinations, this.offers,
+      this.#handleViewAction, this.#handleAddTaskDestroy);
+
     this.#addEventPresenter.init();
   }
 
@@ -84,18 +99,37 @@ export default class TripEventsPresenter {
     render(this.#failedLoadDataComponent, this.#tripEventsListContainer);
   }
 
-  #handleViewAction = (actionType, updateType, eventToUpdate) => {
+  #handleViewAction = async (actionType, updateType, eventToUpdate) => {
+    this.#uiBlocker.block();
+
     switch (actionType) {
       case UserAction.ADD_EVENT:
-        this.#tripEventsModel.addEvent(updateType, eventToUpdate);
+        this.#addEventPresenter.setSaving();
+        try {
+          await this.#tripEventsModel.addEvent(updateType, eventToUpdate);
+        } catch (err) {
+          this.#addEventPresenter.setAborting();
+        }
         break;
       case UserAction.UPDATE_EVENT:
-        this.#tripEventsModel.updateEvent(updateType, eventToUpdate);
+        this.#tripEventPresenters.get(eventToUpdate.id).setSaving();
+        try {
+          await this.#tripEventsModel.updateEvent(updateType, eventToUpdate);
+        } catch (err) {
+          this.#tripEventPresenters.get(eventToUpdate.id).setAborting();
+        }
         break;
       case UserAction.DELETE_EVENT:
-        this.#tripEventsModel.deleteEvent(updateType, eventToUpdate);
+        this.#tripEventPresenters.get(eventToUpdate.id).setDeleting();
+        try {
+          await this.#tripEventsModel.deleteEvent(updateType, eventToUpdate);
+        } catch (err) {
+          this.#tripEventPresenters.get(eventToUpdate.id).setAborting();
+        }
         break;
     }
+
+    this.#uiBlocker.unblock();
   };
 
   #handleModelEvent = (updateType, updatedEvent) => {
@@ -173,7 +207,10 @@ export default class TripEventsPresenter {
   };
 
   #handleStateChange = () => {
-    this.#addEventPresenter.destroy();
+    if (this.#addEventPresenter) {
+      this.#addEventPresenter.destroy();
+    }
+
     this.#tripEventPresenters.forEach((presenter) => presenter.setDefaultState());
   };
 
@@ -183,10 +220,12 @@ export default class TripEventsPresenter {
     }
 
     remove(this.#sortComponent);
-    this.#addEventPresenter.destroy();
+    if (this.#addEventPresenter) {
+      this.#addEventPresenter.destroy();
+    }
+
     this.#tripEventPresenters.forEach((presenter) => presenter.destroy());
     this.#tripEventPresenters.clear();
-    remove(this.#tripEventsListViewComponent);
 
     if (resetSort) {
       this.#currentSortType = SortType.DAY;
