@@ -36,10 +36,12 @@ function handleAddEventFormClose() {
 }
 
 tripInfoPresenter.init();
+render(addEventButtonComponent, tripMainContainerEl);
+addEventButtonComponent.setDisabled();
 filterPresenter.init();
 tripEventsPresenter.init();
 
 Promise.all([destinationsModel.init(), offersModel.init()])
   .then(() => tripEventsModel.init())
-  .then(() => render(addEventButtonComponent, tripMainContainerEl))
+  .then(() => addEventButtonComponent.setEnabled())
   .catch(() => tripEventsPresenter.showError());
