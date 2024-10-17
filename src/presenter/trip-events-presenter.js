@@ -29,7 +29,7 @@ export default class TripEventsPresenter {
   #tripEventsListViewComponent = new TripEventsListView();
   #sortComponent = null;
 
-  #handleAddTaskDestroy = null;
+  #handleAddEventFormClose = null;
 
   #isLoading = true;
   #currentSortType = SortType.DAY;
@@ -41,7 +41,7 @@ export default class TripEventsPresenter {
     upperLimit: TimeLimit.UPPER_LIMIT
   });
 
-  constructor(tripEventsListContainer, tripEventsModel, destinationsModel, offersModel, filterModel, onAddTaskDestroy) {
+  constructor(tripEventsListContainer, tripEventsModel, destinationsModel, offersModel, filterModel, onAddEventFormClose) {
     this.#tripEventsListContainer = tripEventsListContainer;
 
     this.#tripEventsModel = tripEventsModel;
@@ -49,7 +49,7 @@ export default class TripEventsPresenter {
     this.#offersModel = offersModel;
     this.#filterModel = filterModel;
 
-    this.#handleAddTaskDestroy = onAddTaskDestroy;
+    this.#handleAddEventFormClose = onAddEventFormClose;
 
     this.#tripEventsModel.addObserver(this.#handleModelEvent);
     this.#filterModel.addObserver(this.#handleModelEvent);
@@ -88,7 +88,16 @@ export default class TripEventsPresenter {
     this.#currentSortType = SortType.DAY;
     this.#filterModel.setFilter(UpdateType.MAJOR, FilterType.EVERYTHING);
     this.#addEventPresenter = new AddEventPresenter(this.#tripEventsListViewComponent.element, this.destinations, this.offers,
-      this.#handleViewAction, this.#handleAddTaskDestroy);
+      this.#handleViewAction, this.#handleAddEventDestroy);
+
+    if (this.#noTripEventsComponent) {
+      remove(this.#noTripEventsComponent);
+    }
+
+    if (this.#sortComponent === null) {
+      this.#renderSortList();
+    }
+    this.#renderTripEventsContainer();
 
     this.#addEventPresenter.init();
   }
@@ -156,22 +165,23 @@ export default class TripEventsPresenter {
     render(this.#loadingComponent, this.#tripEventsListContainer);
   }
 
+  #renderNoTripEventsMessage() {
+    this.#noTripEventsComponent = new ListEmptyView(this.#filterModel.filter);
+    render(this.#noTripEventsComponent, this.#tripEventsListContainer);
+  }
+
   #renderTripEventsBoard() {
     if (this.#isLoading) {
       this.#renderLoading();
-
       return;
     }
 
     if (this.tripEvents.length === 0) {
-      this.#noTripEventsComponent = new ListEmptyView(this.#filterModel.filter);
-      render(this.#noTripEventsComponent, this.#tripEventsListContainer);
-
+      this.#renderNoTripEventsMessage();
       return;
     }
 
     this.#renderSortList();
-    render(this.#tripEventsListViewComponent, this.#tripEventsListContainer);
     this.#renderTripEvents();
   }
 
@@ -180,7 +190,13 @@ export default class TripEventsPresenter {
     render(this.#sortComponent, this.#tripEventsListContainer);
   }
 
+  #renderTripEventsContainer() {
+    render(this.#tripEventsListViewComponent, this.#tripEventsListContainer);
+  }
+
   #renderTripEvents() {
+    this.#renderTripEventsContainer();
+
     const tripEvents = this.tripEvents;
 
     for (let i = 0; i < tripEvents.length; i++) {
@@ -195,6 +211,17 @@ export default class TripEventsPresenter {
     tripEventPresenter.init(tripEvent);
     this.#tripEventPresenters.set(tripEvent.id, tripEventPresenter);
   }
+
+  #handleAddEventDestroy = () => {
+    this.#handleAddEventFormClose();
+
+    if (this.tripEvents.length === 0) {
+      remove(this.#sortComponent);
+      this.#sortComponent = null;
+
+      this.#renderNoTripEventsMessage();
+    }
+  };
 
   #handleSortTypeChange = (sortType) => {
     if (this.#currentSortType === sortType) {
@@ -220,6 +247,8 @@ export default class TripEventsPresenter {
     }
 
     remove(this.#sortComponent);
+    this.#sortComponent = null;
+
     if (this.#addEventPresenter) {
       this.#addEventPresenter.destroy();
     }

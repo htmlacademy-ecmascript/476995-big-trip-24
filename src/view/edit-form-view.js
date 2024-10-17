@@ -129,7 +129,8 @@ function createEditFormTemplate(event, allDestinations, allOffers) {
                   <span class="visually-hidden">Price</span>
                   &euro;
                 </label>
-                <input class="event__input  event__input--price" id="event-price-1" type="number" name="event-price"
+                <input class="event__input  event__input--price" id="event-price-1" type="number" name="event-price" min="0"
+                  onkeyup="this.value = this.value.replace(/[^0-9]/g,'');"
                   value="${he.encode(basePrice.toString())}" ${isDisabled ? 'disabled' : ''}>
               </div>
 
