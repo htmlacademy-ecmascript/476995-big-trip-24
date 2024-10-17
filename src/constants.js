@@ -4,7 +4,8 @@ const DATE_FORMAT = {
   EVENT_DATE: 'MMM DD',
   EVENT_TIME: 'HH:mm',
   INPUT_DATE: 'DD/MM/YY HH:mm',
-  DATEPICKER_DATE: 'd/m/y H:i'
+  DATEPICKER_DATE: 'd/m/y H:i',
+  TRIP_INFO: 'D MMM',
 };
 
 const SortType = {
