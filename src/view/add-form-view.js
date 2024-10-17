@@ -139,7 +139,8 @@ function createAddFormTemplate(event, allDestinations, allOffers) {
                   <span class="visually-hidden">Price</span>
                   &euro;
                 </label>
-                <input class="event__input  event__input--price" id="event-price-1" type="number" name="event-price"
+                <input class="event__input  event__input--price" id="event-price-1" type="number" name="event-price" min="0"
+                   onkeyup="this.value = this.value.replace(/[^0-9]/g,'');"
                   value="${he.encode(basePrice.toString())}" ${isDisabled ? 'disabled' : ''}>
               </div>
 
@@ -225,7 +226,7 @@ export default class AddFormView extends AbstractStatefulView {
 
   #changeDestinationHandler = (evt) => {
     const newDestinationName = evt.target.value;
-    const destinationId = this.#allDestinations.find((destination) => destination.name === newDestinationName).id;
+    const destinationId = this.#allDestinations.find((destination) => destination.name === newDestinationName)?.id;
 
     this.updateElement({ destination: destinationId });
   };

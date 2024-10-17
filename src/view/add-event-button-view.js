@@ -18,6 +18,14 @@ export default class AddEventButtonView extends AbstarctView {
     return createAddEventButtonTemplate();
   }
 
+  setEnabled() {
+    this.element.disabled = false;
+  }
+
+  setDisabled() {
+    this.element.disabled = true;
+  }
+
   #clickHandler = (evt) => {
     evt.preventDefault();
 

@@ -17,6 +17,16 @@ function makeOffersListHtml(type, selectedOffers, allOffers) {
   ).join('');
 }
 
+function getTotalPrice(basePrice, eventType, selectedOffers, allOffers) {
+  const totalOffersPrice = allOffers
+    .find((offer) => offer.type === eventType)
+    .offers
+    .filter((offer) => selectedOffers.includes(offer.id))
+    .reduce((total, offer) => total + offer.price, 0);
+
+  return basePrice + totalOffersPrice;
+}
+
 function createEventTemplate(event, allDestinations, allOffers) {
   const { dateFrom, dateTo, type, destination, basePrice, isFavorite, offers } = event;
 
@@ -25,6 +35,7 @@ function createEventTemplate(event, allDestinations, allOffers) {
   const eventTimeFrom = formatDate(dateFrom, DATE_FORMAT.EVENT_TIME);
   const eventTimeTo = formatDate(dateTo, DATE_FORMAT.EVENT_TIME);
   const eventDuration = getEventDuration(dateFrom, dateTo);
+  const totalPrice = getTotalPrice(basePrice, type, offers, allOffers);
   const offersListHtml = makeOffersListHtml(type, offers, allOffers);
 
   return `<div class="event">
@@ -42,7 +53,7 @@ function createEventTemplate(event, allDestinations, allOffers) {
                 <p class="event__duration">${eventDuration}</p>
             </div>
             <p class="event__price">
-                &euro;&nbsp;<span class="event__price-value">${basePrice}</span>
+                &euro;&nbsp;<span class="event__price-value">${totalPrice}</span>
             </p>
             <h4 class="visually-hidden">Offers:</h4>
             <ul class="event__selected-offers">
