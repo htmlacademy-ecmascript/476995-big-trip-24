@@ -4,9 +4,9 @@ import TripEventsListItemView from '../view/trip-events-list-item-view.js';
 import EventView from '../view/event-view.js';
 import EditFormView from '../view/edit-form-view.js';
 
-const EVENT_STATE = {
+const EVENT_MODE = {
   DEFAULT: 'default',
-  EDIT: 'edit'
+  EDITING: 'edit'
 };
 
 export default class TripEventPresenter {
@@ -22,7 +22,7 @@ export default class TripEventPresenter {
   #editFormViewComponent = null;
 
   #tripEvent = null;
-  #tripEventState = EVENT_STATE.DEFAULT;
+  #tripEventMode = EVENT_MODE.DEFAULT;
 
   constructor(tripEventsListContainer, allDestinations, allOffers, onUpdateTripEvent, onStateChange) {
     this.#tripEventsListContainer = tripEventsListContainer;
@@ -53,12 +53,13 @@ export default class TripEventPresenter {
       return;
     }
 
-    if (this.#tripEventsListItemComponent.element.contains(prevEventViewComponent.element)) {
+    if (this.#tripEventMode === EVENT_MODE.DEFAULT) {
       replace(this.#eventViewComponent, prevEventViewComponent);
     }
 
-    if (this.#tripEventsListItemComponent.element.contains(prevEditFormViewComponent.element)) {
-      replace(this.#editFormViewComponent, prevEditFormViewComponent);
+    if (this.#tripEventMode === EVENT_MODE.EDITING) {
+      replace(this.#eventViewComponent, prevEditFormViewComponent);
+      this.#tripEventMode = EVENT_MODE.DEFAULT;
     }
 
     remove(prevEventViewComponent);
@@ -66,9 +67,44 @@ export default class TripEventPresenter {
   }
 
   setDefaultState() {
-    if (this.#tripEventState !== EVENT_STATE.DEFAULT) {
+    if (this.#tripEventMode !== EVENT_MODE.DEFAULT) {
       this.#replaceEditFormToEvent();
     }
+  }
+
+  setSaving() {
+    if (this.#tripEventMode === EVENT_MODE.EDITING) {
+      this.#editFormViewComponent.updateElement({
+        isDisabled: true,
+        isSaving: true
+      });
+    }
+  }
+
+  setDeleting() {
+    if (this.#tripEventMode === EVENT_MODE.EDITING) {
+      this.#editFormViewComponent.updateElement({
+        isDisabled: true,
+        isDeleting: true
+      });
+    }
+  }
+
+  setAborting() {
+    if (this.#tripEventMode === EVENT_MODE.DEFAULT) {
+      this.#eventViewComponent.shake();
+      return;
+    }
+
+    const resetFormState = () => {
+      this.#editFormViewComponent.updateElement({
+        isDisabled: false,
+        isSaving: false,
+        isDeleting: false,
+      });
+    };
+
+    this.#editFormViewComponent.shake(resetFormState);
   }
 
   destroy() {
@@ -80,13 +116,13 @@ export default class TripEventPresenter {
   #replaceEventToEditForm() {
     this.#handerStateChange();
     replace(this.#editFormViewComponent, this.#eventViewComponent);
-    this.#tripEventState = EVENT_STATE.EDIT;
+    this.#tripEventMode = EVENT_MODE.EDITING;
     document.addEventListener('keydown', this.#escKeyDownHandler);
   }
 
   #replaceEditFormToEvent() {
     replace(this.#eventViewComponent, this.#editFormViewComponent);
-    this.#tripEventState = EVENT_STATE.DEFAULT;
+    this.#tripEventMode = EVENT_MODE.DEFAULT;
     document.removeEventListener('keydown', this.#escKeyDownHandler);
   }
 
@@ -100,9 +136,9 @@ export default class TripEventPresenter {
   };
 
   #handleEditEventClick = () => {
-    if (this.#tripEventState === EVENT_STATE.DEFAULT) {
+    if (this.#tripEventMode === EVENT_MODE.DEFAULT) {
       this.#replaceEventToEditForm();
-    } else if (this.#tripEventState === EVENT_STATE.EDIT) {
+    } else if (this.#tripEventMode === EVENT_MODE.EDITING) {
       this.#replaceEditFormToEvent();
     }
   };
@@ -113,8 +149,6 @@ export default class TripEventPresenter {
       UpdateType.MINOR,
       tripEvent
     );
-
-    this.#replaceEditFormToEvent();
   };
 
   #handleDeleteClick = (tripEvent) => {

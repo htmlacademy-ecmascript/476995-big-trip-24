@@ -22,16 +22,22 @@ export default class TripEventsModel extends Observable {
       this.#tripEvents = tripEvents.map(this.#adaptToClient);
 
       this._notify(UpdateType.INIT);
-    } catch(err) {
+    } catch (err) {
       this.#tripEvents = [];
       throw new Error('Can\'t get trip events');
     }
   }
 
-  addEvent(updateType, eventToAdd) {
-    this.#tripEvents = [...this.#tripEvents, eventToAdd];
+  async addEvent(updateType, eventToAdd) {
+    try {
+      const response = await this.#apiService.addTripEvent(eventToAdd);
+      const newEvent = this.#adaptToClient(response);
+      this.#tripEvents = [...this.#tripEvents, newEvent];
 
-    this._notify(updateType, eventToAdd);
+      this._notify(updateType, eventToAdd);
+    } catch (err) {
+      throw new Error('Can\'t add task');
+    }
   }
 
   async updateEvent(updateType, eventToUpdate) {
@@ -51,24 +57,30 @@ export default class TripEventsModel extends Observable {
       ];
 
       this._notify(updateType, updatedEvent);
-    } catch(err) {
+    } catch (err) {
       throw new Error('Can\'t update task');
     }
   }
 
-  deleteEvent(updateType, eventToDelete) {
+  async deleteEvent(updateType, eventToDelete) {
     const index = this.#tripEvents.findIndex((event) => event.id === eventToDelete.id);
 
     if (index === -1) {
       throw new Error('Can\'t update unexisting event');
     }
 
-    this.#tripEvents = [
-      ...this.#tripEvents.slice(0, index),
-      ...this.#tripEvents.slice(index + 1),
-    ];
+    try {
+      await this.#apiService.deleteTripEvent(eventToDelete);
 
-    this._notify(updateType);
+      this.#tripEvents = [
+        ...this.#tripEvents.slice(0, index),
+        ...this.#tripEvents.slice(index + 1),
+      ];
+
+      this._notify(updateType);
+    } catch (err) {
+      throw new Error('Can\'t delete task');
+    }
   }
 
   #adaptToClient(tripEvent) {
