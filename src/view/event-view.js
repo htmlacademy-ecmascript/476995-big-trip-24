@@ -1,6 +1,6 @@
 import AbstractView from '../framework/view/abstract-view';
 import { formatDate, getEventDuration } from '../utils/general.js';
-import { DATE_FORMAT } from '../constants.js';
+import { DateFormat } from '../constants.js';
 
 function makeOffersListHtml(type, selectedOffers, allOffers) {
   const offersList = allOffers
@@ -17,25 +17,14 @@ function makeOffersListHtml(type, selectedOffers, allOffers) {
   ).join('');
 }
 
-function getTotalPrice(basePrice, eventType, selectedOffers, allOffers) {
-  const totalOffersPrice = allOffers
-    .find((offer) => offer.type === eventType)
-    .offers
-    .filter((offer) => selectedOffers.includes(offer.id))
-    .reduce((total, offer) => total + offer.price, 0);
-
-  return basePrice + totalOffersPrice;
-}
-
 function createEventTemplate(event, allDestinations, allOffers) {
   const { dateFrom, dateTo, type, destination, basePrice, isFavorite, offers } = event;
 
   const destinationData = allDestinations.find((dest) => dest.id === destination);
-  const eventDate = formatDate(dateFrom, DATE_FORMAT.EVENT_DATE);
-  const eventTimeFrom = formatDate(dateFrom, DATE_FORMAT.EVENT_TIME);
-  const eventTimeTo = formatDate(dateTo, DATE_FORMAT.EVENT_TIME);
+  const eventDate = formatDate(dateFrom, DateFormat.EVENT_DATE);
+  const eventTimeFrom = formatDate(dateFrom, DateFormat.EVENT_TIME);
+  const eventTimeTo = formatDate(dateTo, DateFormat.EVENT_TIME);
   const eventDuration = getEventDuration(dateFrom, dateTo);
-  const totalPrice = getTotalPrice(basePrice, type, offers, allOffers);
   const offersListHtml = makeOffersListHtml(type, offers, allOffers);
 
   return `<div class="event">
@@ -53,7 +42,7 @@ function createEventTemplate(event, allDestinations, allOffers) {
                 <p class="event__duration">${eventDuration}</p>
             </div>
             <p class="event__price">
-                &euro;&nbsp;<span class="event__price-value">${totalPrice}</span>
+                &euro;&nbsp;<span class="event__price-value">${basePrice}</span>
             </p>
             <h4 class="visually-hidden">Offers:</h4>
             <ul class="event__selected-offers">
@@ -88,7 +77,7 @@ export default class EventView extends AbstractView {
     this.#handleFavoriteBtnClick = onFavoriteBtnClick;
     this.element.querySelector('.event__rollup-btn')
       .addEventListener('click', this.#editClickHandler);
-    this.element.querySelector('.event__favorite-icon')
+    this.element.querySelector('.event__favorite-btn')
       .addEventListener('click', this.#favoriteBtnClickHandler);
   }
 
@@ -96,13 +85,13 @@ export default class EventView extends AbstractView {
     return createEventTemplate(this.#event, this.#allDestinations, this.#allOffers);
   }
 
-  #editClickHandler = (evt) => {
-    evt.preventDefault();
-    this.#handleEditClick();
-  };
-
   #favoriteBtnClickHandler = (evt) => {
     evt.preventDefault();
     this.#handleFavoriteBtnClick();
+  };
+
+  #editClickHandler = (evt) => {
+    evt.preventDefault();
+    this.#handleEditClick();
   };
 }

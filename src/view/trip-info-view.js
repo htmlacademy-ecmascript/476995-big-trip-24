@@ -1,6 +1,6 @@
 
 import AbstarctView from '../framework/view/abstract-view.js';
-import { DATE_FORMAT } from '../constants.js';
+import { DateFormat } from '../constants.js';
 import { formatDate } from '../utils/general.js';
 import { sortByDate } from '../utils/sort.js';
 
@@ -24,8 +24,8 @@ function getTripRoute(tripEvents, allDestinations) {
 
 function getTripDates(tripEvents) {
   const sortedTripEvents = [...tripEvents.sort(sortByDate)];
-  const dateStart = formatDate(sortedTripEvents[0]?.dateFrom, DATE_FORMAT.TRIP_INFO);
-  const dateEnd = formatDate(sortedTripEvents[sortedTripEvents.length - 1]?.dateTo, DATE_FORMAT.TRIP_INFO);
+  const dateStart = formatDate(sortedTripEvents[0]?.dateFrom, DateFormat.TRIP_INFO);
+  const dateEnd = formatDate(sortedTripEvents[sortedTripEvents.length - 1]?.dateTo, DateFormat.TRIP_INFO);
 
   return `${dateStart} - ${dateEnd}`;
 }
