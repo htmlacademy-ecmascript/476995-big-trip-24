@@ -8,11 +8,12 @@ const isFutureFilter = (date) => {
   return targetDate.isAfter(currDate);
 };
 
-const isPresentFilter = (date) => {
+const isPresentFilter = (eventPoint) => {
   const currDate = dayjs();
-  const targetDate = dayjs(date);
+  const targetDateFrom = dayjs(eventPoint.dateFrom);
+  const targetDateTo = dayjs(eventPoint.dateTo);
 
-  return targetDate.isSame(currDate, 'day');
+  return currDate.isAfter(targetDateFrom) && currDate.isBefore(targetDateTo);
 };
 
 const isPastFilter = (date) => {
@@ -24,8 +25,8 @@ const isPastFilter = (date) => {
 
 const filter = {
   [FilterType.EVERYTHING]: (eventPoints) => eventPoints,
-  [FilterType.FUTURE]: (eventPoints) => eventPoints.filter((eventPoint) => isFutureFilter(eventPoint.dateTo)),
-  [FilterType.PRESENT]: (eventPoints) => eventPoints.filter((eventPoint) => isPresentFilter(eventPoint.dateTo)),
+  [FilterType.FUTURE]: (eventPoints) => eventPoints.filter((eventPoint) => isFutureFilter(eventPoint.dateFrom)),
+  [FilterType.PRESENT]: (eventPoints) => eventPoints.filter((eventPoint) => isPresentFilter(eventPoint)),
   [FilterType.PAST]: (eventPoints) => eventPoints.filter((eventPoint) => isPastFilter(eventPoint.dateTo)),
 };
 

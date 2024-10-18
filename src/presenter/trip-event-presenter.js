@@ -4,7 +4,7 @@ import TripEventsListItemView from '../view/trip-events-list-item-view.js';
 import EventView from '../view/event-view.js';
 import EditFormView from '../view/edit-form-view.js';
 
-const EVENT_MODE = {
+const EventMode = {
   DEFAULT: 'default',
   EDITING: 'edit'
 };
@@ -22,7 +22,7 @@ export default class TripEventPresenter {
   #editFormViewComponent = null;
 
   #tripEvent = null;
-  #tripEventMode = EVENT_MODE.DEFAULT;
+  #tripEventMode = EventMode.DEFAULT;
 
   constructor(tripEventsListContainer, allDestinations, allOffers, onUpdateTripEvent, onStateChange) {
     this.#tripEventsListContainer = tripEventsListContainer;
@@ -53,13 +53,13 @@ export default class TripEventPresenter {
       return;
     }
 
-    if (this.#tripEventMode === EVENT_MODE.DEFAULT) {
+    if (this.#tripEventMode === EventMode.DEFAULT) {
       replace(this.#eventViewComponent, prevEventViewComponent);
     }
 
-    if (this.#tripEventMode === EVENT_MODE.EDITING) {
+    if (this.#tripEventMode === EventMode.EDITING) {
       replace(this.#eventViewComponent, prevEditFormViewComponent);
-      this.#tripEventMode = EVENT_MODE.DEFAULT;
+      this.#tripEventMode = EventMode.DEFAULT;
     }
 
     remove(prevEventViewComponent);
@@ -67,13 +67,14 @@ export default class TripEventPresenter {
   }
 
   setDefaultState() {
-    if (this.#tripEventMode !== EVENT_MODE.DEFAULT) {
+    if (this.#tripEventMode !== EventMode.DEFAULT) {
+      this.#editFormViewComponent.reset(this.#tripEvent);
       this.#replaceEditFormToEvent();
     }
   }
 
   setSaving() {
-    if (this.#tripEventMode === EVENT_MODE.EDITING) {
+    if (this.#tripEventMode === EventMode.EDITING) {
       this.#editFormViewComponent.updateElement({
         isDisabled: true,
         isSaving: true
@@ -82,7 +83,7 @@ export default class TripEventPresenter {
   }
 
   setDeleting() {
-    if (this.#tripEventMode === EVENT_MODE.EDITING) {
+    if (this.#tripEventMode === EventMode.EDITING) {
       this.#editFormViewComponent.updateElement({
         isDisabled: true,
         isDeleting: true
@@ -91,7 +92,7 @@ export default class TripEventPresenter {
   }
 
   setAborting() {
-    if (this.#tripEventMode === EVENT_MODE.DEFAULT) {
+    if (this.#tripEventMode === EventMode.DEFAULT) {
       this.#eventViewComponent.shake();
       return;
     }
@@ -116,13 +117,13 @@ export default class TripEventPresenter {
   #replaceEventToEditForm() {
     this.#handerStateChange();
     replace(this.#editFormViewComponent, this.#eventViewComponent);
-    this.#tripEventMode = EVENT_MODE.EDITING;
+    this.#tripEventMode = EventMode.EDITING;
     document.addEventListener('keydown', this.#escKeyDownHandler);
   }
 
   #replaceEditFormToEvent() {
     replace(this.#eventViewComponent, this.#editFormViewComponent);
-    this.#tripEventMode = EVENT_MODE.DEFAULT;
+    this.#tripEventMode = EventMode.DEFAULT;
     document.removeEventListener('keydown', this.#escKeyDownHandler);
   }
 
@@ -136,9 +137,9 @@ export default class TripEventPresenter {
   };
 
   #handleEditEventClick = () => {
-    if (this.#tripEventMode === EVENT_MODE.DEFAULT) {
+    if (this.#tripEventMode === EventMode.DEFAULT) {
       this.#replaceEventToEditForm();
-    } else if (this.#tripEventMode === EVENT_MODE.EDITING) {
+    } else if (this.#tripEventMode === EventMode.EDITING) {
       this.#replaceEditFormToEvent();
     }
   };

@@ -1,9 +1,11 @@
 import { remove, render, RenderPosition } from '../framework/render.js';
 import { UpdateType, UserAction } from '../constants.js';
+import TripEventsListItemView from '../view/trip-events-list-item-view.js';
 import AddFormView from '../view/add-form-view.js';
 
 export default class AddEventPresenter {
   #tripEventsContainer = null;
+  #tripEventsListItemComponent = null;
   #handleDataChange = null;
   #handleDestroy = null;
 
@@ -25,10 +27,14 @@ export default class AddEventPresenter {
       return;
     }
 
+    if (this.#tripEventsListItemComponent === null) {
+      this.#tripEventsListItemComponent = new TripEventsListItemView();
+      render(this.#tripEventsListItemComponent, this.#tripEventsContainer, RenderPosition.AFTERBEGIN);
+    }
+
     this.#addEventComponent = new AddFormView(this.#allDestinations, this.#allOffers, this.#handleFormSubmit,
       this.#handleCancelClick);
-
-    render(this.#addEventComponent, this.#tripEventsContainer, RenderPosition.AFTERBEGIN);
+    render(this.#addEventComponent, this.#tripEventsListItemComponent.element);
 
     document.addEventListener('keydown', this.#escKeyDownHandler);
   }
@@ -60,6 +66,9 @@ export default class AddEventPresenter {
 
     remove(this.#addEventComponent);
     this.#addEventComponent = null;
+
+    remove(this.#tripEventsListItemComponent);
+    this.#tripEventsListItemComponent = null;
 
     document.removeEventListener('keydown', this.#escKeyDownHandler);
   }

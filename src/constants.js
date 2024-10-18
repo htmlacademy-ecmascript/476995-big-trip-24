@@ -1,6 +1,6 @@
-const EVENT_TYPES = ['taxi', 'bus', 'train', 'ship', 'drive', 'flight', 'check-in', 'sightseeing', 'restaurant'];
+const EventTypes = ['taxi', 'bus', 'train', 'ship', 'drive', 'flight', 'check-in', 'sightseeing', 'restaurant'];
 
-const DATE_FORMAT = {
+const DateFormat = {
   EVENT_DATE: 'MMM DD',
   EVENT_TIME: 'HH:mm',
   INPUT_DATE: 'DD/MM/YY HH:mm',
@@ -17,10 +17,10 @@ const SortType = {
 };
 
 const FilterType = {
-  EVERYTHING: 'everything',
-  FUTURE: 'future',
-  PRESENT: 'present',
-  PAST: 'past'
+  EVERYTHING: 'EVERYTHING',
+  FUTURE: 'FUTURE',
+  PRESENT: 'PRESENT',
+  PAST: 'PAST'
 };
 
 const UserAction = {
@@ -39,4 +39,4 @@ const UpdateType = {
 const AUTHORIZATION = 'Basic TZPk6NHiTsPq8mx';
 const END_POINT = 'https://24.objects.htmlacademy.pro/big-trip';
 
-export { EVENT_TYPES, DATE_FORMAT, SortType, FilterType, UserAction, UpdateType, AUTHORIZATION, END_POINT };
+export { EventTypes, DateFormat, SortType, FilterType, UserAction, UpdateType, AUTHORIZATION, END_POINT };
