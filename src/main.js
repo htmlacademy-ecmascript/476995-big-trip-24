@@ -1,6 +1,6 @@
 import { render } from './framework/render.js';
 import { AUTHORIZATION, END_POINT } from './constants.js';
-import ApiService from './api-service.js';
+import TripEventsApiService from './trip-events-api-service.js';
 import FilterModel from './model/filter-model.js';
 import DestinationsModel from './model/destinations-model.js';
 import OffersModel from './model/offers-model.js';
@@ -15,9 +15,9 @@ const tripBoardContainerEl = document.querySelector('.trip-events');
 const filterContainerEl = document.querySelector('.trip-controls__filters');
 
 const filterModel = new FilterModel();
-const destinationsModel = new DestinationsModel(new ApiService(END_POINT, AUTHORIZATION));
-const offersModel = new OffersModel(new ApiService(END_POINT, AUTHORIZATION));
-const tripEventsModel = new TripEventsModel(new ApiService(END_POINT, AUTHORIZATION));
+const destinationsModel = new DestinationsModel(new TripEventsApiService(END_POINT, AUTHORIZATION));
+const offersModel = new OffersModel(new TripEventsApiService(END_POINT, AUTHORIZATION));
+const tripEventsModel = new TripEventsModel(new TripEventsApiService(END_POINT, AUTHORIZATION));
 
 const tripInfoPresenter = new TripInfoPresenter(tripMainContainerEl, tripEventsModel, destinationsModel, offersModel);
 const addEventButtonComponent = new AddEventButtonView(handleAddEventButtonClick);
